@@ -1,6 +1,6 @@
 # Home Media Server — System Architecture
 
-**Version:** 1.0  
+**Version:** 1.1
 **Last Updated:** [Date]
 
 ---
@@ -114,3 +114,180 @@ The system is designed for personal use within a home network and does **not** r
         └── SeriesName (Year)/
             └── Season 01/
                 └── SeriesName - S01E01 - EpisodeTitle.mp4
+```
+
+## 6. Network Architecture
+
+- All devices are on the same local network.
+- **Orange Pi 3B** has a static IP (e.g., 192.168.1.100) and mDNS hostname `orangepi3b.local`.
+- **Arch laptop** uses `devserver.local` (mDNS) for development.
+- **Windows PC** may require manual hosts entries if mDNS is not supported.
+- Reverse proxy (Caddy) listens on ports 80/443 and routes:
+-- `/api/*` → Jellyfin (internal port 8096)
+-- `/*` → Web frontend (static files or container)
+-No public IP or external access is required.
+
+Future remote access: Can be added via VPN (Tailscale/WireGuard) without changing the architecture.
+
+---
+
+## 7. Docker Architecture (Production)
+
+The Orange Pi 3B runs the following Docker services:
+
+| Service | Image | Purpose | Config |
+|---------|-------|---------|--------|
+| `caddy` | `caddy:2-alpine` | Reverse proxy and TLS | `Caddyfile`, volumes for data |
+| `jellyfin` | `jellyfin/jellyfin` (arm64) | Media server backend | Mounts SSD and HDD, transcoding disabled |
+| `web-frontend` | `nginx:alpine` (or static file served by Caddy) | Serves built SPA | Mounts build output |
+
+All services share a Docker network (`media-net`). Only Caddy publishes ports to the host.
+
+Transcoding is disabled inside Jellyfin (Dashboard → Playback → Transcoding → Off). No hardware acceleration devices are passed.
+
+---
+
+## 8. Jellyfin Configuration
+
+- Libraries:
+-- Movies → `/media/movies`
+-- TV Shows → `/media/tvshows`
+- Authentication:
+  Jellyfin manages user accounts. Access tokens are obtained via /Users/AuthenticateByName.
+- Playback:
+  Only direct play is used. Clients receive a static=true stream URL and play the file as‑is.
+- Metadata:
+  Jellyfin fetches posters, descriptions, and other metadata from online providers and stores them in /config.
+
+---
+
+## 9. Web Frontend Design (SvelteKit)
+
+The web app is a single‑page application that communicates exclusively with Jellyfin’s REST API.
+
+**Key Screens (MVP)**
+
+| Screen | API Calls | Notes |
+|--------|-----------|-------|
+| Login | `POST /Users/AuthenticateByName` | Store access token |
+| Movies List | `GET /Users/{userId}/Items?IncludeItemTypes=Movie` | Grid of posters |
+| Movie Detail | `GET /Users/{userId}/Items/{itemId}` | Metadata, play button |
+| Video Player | `GET /Items/{itemId}/PlaybackInfo` | Obtain direct stream URL |
+
+**Playback Flow**
+
+1. User clicks a movie.
+2. App requests playback info and extracts the direct stream URL.
+3. URL is set as the `src` of an HTML5 `<video>` element.
+4. Browser decodes and plays the video locally.
+
+---
+
+## 10. Android App Design (Kotlin + Compose)
+
+The Android app mirrors the web functionality and uses the jellyfin‑sdk‑kotlin for API access.
+
+**Key Screens (MVP)**
+
+| Screen | Purpose |
+|--------|---------|
+| Server URL | Allows user to enter Jellyfin server address (stored in DataStore) |
+| Login | Authenticate and receive token |
+| Movies Grid | Browse movies |
+| Movie Detail | Metadata and play button |
+| Player | Media3 ExoPlayer with direct stream URL |
+
+Playback: ExoPlayer plays the direct stream URL. The app sends playback progress updates to Jellyfin for resume functionality (optional MVP).
+
+---
+
+## 11. API Endpoints (Jellyfin)
+
+Clients use a subset of Jellyfin’s REST API. All requests include the access token in the `X-Emby-Authorization` header.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/Users/AuthenticateByName` | Login, returns user and token |
+| GET | `/Users/{userId}/Items` | List library items (filterable) |
+| GET | `/Users/{userId}/Items/{itemId}` | Get item details |
+| GET | `/Users/{userId}/Items/Resume` | Continue watching list |
+| GET | `/Users/{userId}/Items/Latest` | Recently added |
+| GET | `/Users/{userId}/Items?searchTerm={q}` | Search |
+| POST | `/Items/{itemId}/PlaybackInfo` | Get media sources and stream URLs |
+| GET | `/Videos/{itemId}/stream?static=true&...` | Direct stream URL |
+| GET | `/Items/{itemId}/Images/Primary` | Poster/thumbnail |
+| POST | `/Sessions/Playing` | Notify playback started |
+| POST | `/Sessions/Playing/Progress` | Update playback progress |
+| POST | `/Sessions/Playing/Stopped` | Notify playback stopped |
+
+---
+
+## 12. Security Considerations
+
+- System is local‑only; no exposure to the public internet.
+- Jellyfin requires authentication for all API calls.
+- Caddy provides TLS with self‑signed certificates (optional but recommended).
+- Media HDD mounted read‑only into Jellyfin container.
+- Docker containers run as non‑root where possible.
+- Secrets (if any) are passed via environment variables or `.env` files (not committed to Git).
+
+**Required**: Authentication for Jellyfin, read‑only media mount.
+**Optional**: HTTPS, firewall rules on Orange Pi.
+
+---
+
+## 13. Backup Strategy
+
+| What | Method | Frequency |
+|------|--------|-----------|
+| Jellyfin config/database | `tar` or `rsync` to another machine | Weekly |
+| Media files | Not backed up (replaceable) | Manual if desired |
+| Source code | Git repository (GitHub) | Every commit |
+| Docker compose files | Git repository | Every commit |
+
+**Recovery**: Reinstall OS, Docker, pull repo, restore config, remount drives.
+
+---
+
+## 14. Deployment Workflow
+
+1. Web frontend
+-- Build on Arch laptop (`npm run build`).
+-- Copy static files to Orange Pi (`scp` or via Docker image).
+2. Android app
+-- Build APK on Windows PC.
+-- Install directly on device.
+3. Docker configs
+-- Update `docker-compose.yml` in repo.
+-- Pull on Orange Pi and restart containers.
+
+---
+
+## 15. Future Improvements (No Redesign Required)
+
+- TV series browsing (add UI screens)
+- Continue Watching and resume sync
+- Subtitles and multiple audio track selection
+- User profiles and permissions
+- Offline downloads in Android
+- Hardware acceleration (if ever needed, but not recommended on this board)
+- Remote access via VPN
+- More advanced caching and PWA
+- Optional NPU‑powered features: smart thumbnail selection, content tagging, voice control (separate project, not part of core architecture)
+
+---
+
+# 16. Key Decisions & Rationale
+
+| Decision | Reason |
+|----------|--------|
+| Use Jellyfin as backend | Avoid building media scanner, metadata, and streaming from scratch. |
+| No transcoding | Orange Pi 3B’s CPU/GPU is sufficient for direct play; transcoding is unnecessary for our client devices. |
+| Custom frontends | Required by project goals; Jellyfin API is stable and well‑documented. |
+| Single repository (monorepo) | Simplifies management for a solo project. |
+| Caddy as reverse proxy | Easy HTTPS, automatic mDNS support, lightweight. |
+| SQLite (inside Jellyfin) | Adequate for home scale; no external database needed. |
+
+---
+
+This document is the source of truth for architectural decisions. Update it whenever a major change is made.
