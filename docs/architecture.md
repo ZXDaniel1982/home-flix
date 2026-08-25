@@ -153,15 +153,18 @@ Transcoding is disabled inside Jellyfin (Dashboard → Playback → Transcoding 
 
 ## 8. Jellyfin Configuration
 
-- Libraries:
-  - Movies → `/media/movies`
+- **Libraries:**  
+  - Movies → `/media/movies`  
   - TV Shows → `/media/tvshows`
-- Authentication:
-  Jellyfin manages user accounts. Access tokens are obtained via /Users/AuthenticateByName.
-- Playback:
-  Only direct play is used. Clients receive a static=true stream URL and play the file as‑is.
-- Metadata:
-  Jellyfin fetches posters, descriptions, and other metadata from online providers and stores them in /config.
+
+- **Authentication:**  
+  Jellyfin manages user accounts. Access tokens are obtained via `/Users/AuthenticateByName`.
+
+- **Playback:**  
+  Only direct play is used. Clients receive a `static=true` stream URL and play the file as‑is.
+
+- **Metadata:**  
+  Jellyfin fetches posters, descriptions, and other metadata from online providers and stores them in `/config`.
 
 ---
 
