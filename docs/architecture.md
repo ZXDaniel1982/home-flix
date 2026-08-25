@@ -75,6 +75,18 @@ The system is designed for personal use within a home network and does **not** r
 | Arch Linux laptop | Arch Linux (rolling) | `devserver.local` | Development and testing environment. |
 | Windows PC | Windows 10/11 | — | Android development (Android Studio) and VS Code remote access. |
 
+### 4.1 Hardware Resources
+
+- **Orange Pi 3B**  
+  - SoC: Rockchip RK3566 (quad‑core Cortex‑A55)  
+  - RAM: **8 GB LPDDR4** (ample for direct‑play streaming)  
+  - Storage: 500 GB M.2 NVMe SSD (metadata/cache) + 2 TB USB 3.0 HDD (media)  
+  - Network: Gigabit Ethernet  
+  - OS: Debian (official or Armbian)
+
+- **Arch Linux laptop** (development)  
+- **Windows PC** (Android development and remote access)
+
 ---
 
 ## 5. Storage Layout
