@@ -32,6 +32,8 @@ The system is designed for personal use within a home network and does **not** r
 
 ---
 
+## 3. Architecture Diagram
+
 ```text
 ┌───────────────┐       ┌───────────────┐
 │  Web Browser  │       │  Android App  │
@@ -116,6 +118,8 @@ The system is designed for personal use within a home network and does **not** r
                 └── SeriesName - S01E01 - EpisodeTitle.mp4
 ```
 
+Note: Media files must be in a client‑friendly format (H.264/AAC in MP4 recommended) to avoid transcoding.
+
 ## 6. Network Architecture
 
 - All devices are on the same local network.
@@ -123,8 +127,8 @@ The system is designed for personal use within a home network and does **not** r
 - **Arch laptop** uses `devserver.local` (mDNS) for development.
 - **Windows PC** may require manual hosts entries if mDNS is not supported.
 - Reverse proxy (Caddy) listens on ports 80/443 and routes:
--- `/api/*` → Jellyfin (internal port 8096)
--- `/*` → Web frontend (static files or container)
+  - `/api/*` → Jellyfin (internal port 8096)
+  - `/*` → Web frontend (static files or container)
 -No public IP or external access is required.
 
 Future remote access: Can be added via VPN (Tailscale/WireGuard) without changing the architecture.
@@ -150,8 +154,8 @@ Transcoding is disabled inside Jellyfin (Dashboard → Playback → Transcoding 
 ## 8. Jellyfin Configuration
 
 - Libraries:
--- Movies → `/media/movies`
--- TV Shows → `/media/tvshows`
+  - Movies → `/media/movies`
+  - TV Shows → `/media/tvshows`
 - Authentication:
   Jellyfin manages user accounts. Access tokens are obtained via /Users/AuthenticateByName.
 - Playback:
@@ -252,14 +256,14 @@ Clients use a subset of Jellyfin’s REST API. All requests include the access t
 ## 14. Deployment Workflow
 
 1. Web frontend
--- Build on Arch laptop (`npm run build`).
--- Copy static files to Orange Pi (`scp` or via Docker image).
+   - Build on Arch laptop (`npm run build`).
+   - Copy static files to Orange Pi (`scp` or via Docker image).
 2. Android app
--- Build APK on Windows PC.
--- Install directly on device.
+   - Build APK on Windows PC.
+   - Install directly on device.
 3. Docker configs
--- Update `docker-compose.yml` in repo.
--- Pull on Orange Pi and restart containers.
+   - Update `docker-compose.yml` in repo.
+   - Pull on Orange Pi and restart containers.
 
 ---
 
