@@ -129,7 +129,7 @@ Note: Media files must be in a client‑friendly format (H.264/AAC in MP4 recomm
 - Reverse proxy (Caddy) listens on ports 80/443 and routes:
   - `/api/*` → Jellyfin (internal port 8096)
   - `/*` → Web frontend (static files or container)
--No public IP or external access is required.
+- No public IP or external access is required.
 
 Future remote access: Can be added via VPN (Tailscale/WireGuard) without changing the architecture.
 
