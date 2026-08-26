@@ -1,7 +1,7 @@
 # Home Media Server — System Architecture
 
-**Version:** 1.1
-**Last Updated:** [Date]
+**Version:** 1.2
+**Last Updated:** 2026-08-27
 
 ---
 
@@ -27,8 +27,8 @@ The system is designed for personal use within a home network and does **not** r
 | **Web Frontend** | SvelteKit (static SPA) | Custom user interface for browsing and playing media in a browser. |
 | **Android App** | Kotlin + Jetpack Compose | Native Android client with media browsing and playback. |
 | **Database** | SQLite (inside Jellyfin) | Stores user data, library items, metadata, play states. Managed entirely by Jellyfin. |
-| **Media Storage** | USB 3.0 HDD (2 TB) | Raw video files, organized in a Jellyfin‑compatible folder structure. |
-| **Metadata / Cache** | M.2 NVMe SSD (500 GB) | Jellyfin configuration, database, fetched metadata, image cache. |
+| **Streaming Storage** | SSD (512 GB) at `/mnt/ssd` | Video files staged for streaming; Jellyfin configuration, database, metadata, image cache. |
+| **Archive Storage** | USB 3.0 HDD (2 TB) at `/mnt/hdd` | Long‑term archive of all video files. Copied to the SSD when needed for streaming. |
 
 ---
 
@@ -55,16 +55,17 @@ The system is designed for personal use within a home network and does **not** r
            │(Docker)│     └──►   Web Frontend  │
            └───┬────┘        │   (Static SPA)  │
                │             └─────────────────┘
-               │ reads/writes
-      ┌────────┴────────┐
-      │  SSD (metadata, │
-      │  DB, cache)     │
-      └─────────────────┘
-               │ reads media
-      ┌────────┴────────┐
-      │  HDD (media     │
-      │  library)       │
-      └─────────────────┘
+                │ reads/writes
+       ┌────────┴────────┐
+       │  SSD (streaming │
+       │  media, config, │
+       │  DB, cache)     │
+       └─────────────────┘
+                ▲ copies media to SSD
+       ┌────────┴────────┐
+       │  HDD (media     │
+       │  archive)       │
+       └─────────────────┘
 ```
 
 ---
@@ -73,7 +74,7 @@ The system is designed for personal use within a home network and does **not** r
 
 | Machine | OS | Hostname | Purpose |
 |---------|----|----------|---------|
-| Orange Pi 3B | Debian (official/Armbian) | `orangepi3b.local` | Production server, runs Docker containers. |
+| Orange Pi 3B | Armbian 13 | `orangepi3b.local` | Production server, runs Docker containers. |
 | Arch Linux laptop | Arch Linux (rolling) | `devserver.local` | Development and testing environment. |
 | Windows PC | Windows 10/11 | — | Android development (Android Studio) and VS Code remote access. |
 
@@ -82,9 +83,9 @@ The system is designed for personal use within a home network and does **not** r
 - **Orange Pi 3B**  
   - SoC: Rockchip RK3566 (quad‑core Cortex‑A55)  
   - RAM: **8 GB LPDDR4** (ample for direct‑play streaming)  
-  - Storage: 500 GB M.2 NVMe SSD (metadata/cache) + 2 TB USB 3.0 HDD (media)  
+  - Storage: 64 GB eMMC (OS) + 512 GB SSD (streaming) + 2 TB USB 3.0 HDD (archive)  
   - Network: Gigabit Ethernet  
-  - OS: Debian (official or Armbian)
+  - OS: Armbian 13 (kernel 6.18.46‑current‑rockchip64)
 
 - **Arch Linux laptop** (development)  
 - **Windows PC** (Android development and remote access)
@@ -95,30 +96,38 @@ The system is designed for personal use within a home network and does **not** r
 
 ### 5.1 Physical Drives
 
-- **500 GB M.2 NVMe SSD** mounted at `/mnt/ssd`
-- **2 TB USB 3.0 HDD** mounted at `/mnt/hdd`
+- **64 GB eMMC** — OS (Armbian 13)
+- **512 GB SSD** mounted at `/mnt/ssd` — video files staged for streaming + Jellyfin config/cache
+- **2 TB USB 3.0 HDD** mounted at `/mnt/hdd` — long‑term media archive
 
 ### 5.2 Directory Structure
 
 ```text
 /mnt/ssd/
+├── media/                # Video files staged for streaming (copied from the HDD archive)
+│   ├── movies/
+│   │   └── MovieName (Year)/
+│   │       └── MovieName (Year) - 1080p.mp4
+│   └── tvshows/
+│       └── SeriesName (Year)/
+│           └── Season 01/
+│               └── SeriesName - S01E01 - EpisodeTitle.mp4
 ├── jellyfin/
-│   ├── config/          # Jellyfin database, metadata, user settings
-│   └── cache/           # Image cache, temporary files (no transcoding)
-└── web-frontend/        # Built static files for web app (optional, if not using Docker)
+│   ├── config/           # Jellyfin database, metadata, user settings
+│   └── cache/            # Image cache, temporary files (no transcoding)
+└── web-frontend/         # Built static files for web app (optional, if not using Docker)
 
 /mnt/hdd/
-└── media/
+└── archive/              # Master copy of all media (not served directly by Jellyfin)
     ├── movies/
-    │   └── MovieName (Year)/
-    │       └── MovieName (Year) - 1080p.mp4
     └── tvshows/
-        └── SeriesName (Year)/
-            └── Season 01/
-                └── SeriesName - S01E01 - EpisodeTitle.mp4
 ```
 
 Note: Media files must be in a client‑friendly format (H.264/AAC in MP4 recommended) to avoid transcoding.
+
+### 5.3 Media Flow (HDD archive → SSD streaming)
+
+The HDD is the long‑term archive and is not read by Jellyfin. When a video is to be streamed, it is copied from the HDD to the SSD; Jellyfin serves only the files staged on the SSD. This isolates the archive from streaming reads and serves media from fast SSD storage.
 
 ## 6. Network Architecture
 
@@ -142,7 +151,7 @@ The Orange Pi 3B runs the following Docker services:
 | Service | Image | Purpose | Config |
 |---------|-------|---------|--------|
 | `caddy` | `caddy:2-alpine` | Reverse proxy and TLS | `Caddyfile`, volumes for data |
-| `jellyfin` | `jellyfin/jellyfin` (arm64) | Media server backend | Mounts SSD and HDD, transcoding disabled |
+| `jellyfin` | `jellyfin/jellyfin` (arm64) | Media server backend | Mounts SSD (media + config), transcoding disabled |
 | `web-frontend` | `nginx:alpine` (or static file served by Caddy) | Serves built SPA | Mounts build output |
 
 All services share a Docker network (`media-net`). Only Caddy publishes ports to the host.
@@ -155,7 +164,8 @@ Transcoding is disabled inside Jellyfin (Dashboard → Playback → Transcoding 
 
 - **Libraries:**  
   - Movies → `/media/movies`  
-  - TV Shows → `/media/tvshows`
+  - TV Shows → `/media/tvshows`  
+  `/media` maps to `/mnt/ssd/media` on the host (files staged for streaming from the HDD archive).
 
 - **Authentication:**  
   Jellyfin manages user accounts. Access tokens are obtained via `/Users/AuthenticateByName`.
@@ -234,7 +244,7 @@ Clients use a subset of Jellyfin’s REST API. All requests include the access t
 - System is local‑only; no exposure to the public internet.
 - Jellyfin requires authentication for all API calls.
 - Caddy provides TLS with self‑signed certificates (optional but recommended).
-- Media HDD mounted read‑only into Jellyfin container.
+- Streaming media (SSD) mounted read‑only into Jellyfin container; the archive HDD is not mounted into Jellyfin.
 - Docker containers run as non‑root where possible.
 - Secrets (if any) are passed via environment variables or `.env` files (not committed to Git).
 
@@ -248,7 +258,7 @@ Clients use a subset of Jellyfin’s REST API. All requests include the access t
 | What | Method | Frequency |
 |------|--------|-----------|
 | Jellyfin config/database | `tar` or `rsync` to another machine | Weekly |
-| Media files | Not backed up (replaceable) | Manual if desired |
+| Media archive (HDD) | Master copy; SSD staging is replaceable | Manual if desired |
 | Source code | Git repository (GitHub) | Every commit |
 | Docker compose files | Git repository | Every commit |
 

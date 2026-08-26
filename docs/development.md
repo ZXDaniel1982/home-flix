@@ -11,7 +11,7 @@
 |---------|----|----------|--------------|------|
 | Windows PC | Windows 10/11 | — | 192.168.1.20 | Android development, VS Code Remote‑SSH client |
 | Arch Linux laptop | Arch Linux (rolling) | `devserver` | DHCP-assigned | Primary development machine (Docker, Node.js, source code) |
-| Orange Pi 3B | Debian (official/Armbian) | `orangepi3b` | 192.168.1.100 | Production server (Docker, Jellyfin, Caddy) |
+| Orange Pi 3B | Armbian 13 | `orangepi3b` | 192.168.1.100 | Production server (Docker, Jellyfin, Caddy) |
 
 ---
 
@@ -186,8 +186,10 @@ The Android app should **not** hardcode the server address. Instead:
 
 ### 7.1 SSH and Clone
 
+The board has users `root` and `dzhang`; SSH as `dzhang`.
+
 ```bash
-ssh orangepi@orangepi3b.local
+ssh dzhang@orangepi3b.local
 cd ~
 git clone https://github.com/yourusername/home-media-server.git
 cd home-media-server/docker
@@ -242,7 +244,7 @@ docker compose up -d
 | Install deps | `cd web-frontend && npm install` |
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
-| Deploy to Orange Pi | `scp -r build/* orangepi@orangepi3b.local:/mnt/ssd/web-frontend/` |
+| Deploy to Orange Pi | `scp -r build/* dzhang@orangepi3b.local:/mnt/ssd/web-frontend/` |
 
 ### Android
 
@@ -275,7 +277,7 @@ scp jellyfin-config-*.tar.gz user@devserver.local:~/backups/
 - **Arch Linux** is rolling release. Run `sudo pacman -Syu` regularly.  
 - If Docker requires `sudo` after group addition, log out and back in.  
 - mDNS may not work on all Android devices; if so, use the IP address directly.  
-- The Orange Pi runs **Debian**; use `apt` there, not `pacman`.  
+- The Orange Pi runs **Armbian** (Debian‑based); use `apt` there, not `pacman`.  
 - Always use environment variables for URLs; never commit `.env` files to Git.
 
 ---
