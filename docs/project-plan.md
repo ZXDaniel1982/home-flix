@@ -15,7 +15,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 1.1.1 — Set up Git repository: Create repo, add `.gitignore`, initial README. *(MVP, S)*
 - [x] 1.1.2 — Configure Arch Linux laptop for development: Install Docker, Node.js, SSH server, VS Code Remote-SSH. *(MVP, M)*
-- [ ] 1.1.3 — Set up remote access from Windows PC: Configure VS Code Remote-SSH, SSH keys, port forwarding. *(MVP, S)*
+- [x] 1.1.3 — Set up remote access from Windows PC: Configure VS Code Remote-SSH, SSH keys, port forwarding. *(MVP, S)*
 
 ### Epic 1.2 — Orange Pi 3B Server Setup
 

@@ -10,7 +10,7 @@
 | Machine | OS | Hostname | IP (example) | Role |
 |---------|----|----------|--------------|------|
 | Windows PC | Windows 10/11 | — | 192.168.1.20 | Android development, VS Code Remote‑SSH client |
-| Arch Linux laptop | Arch Linux (rolling) | `devserver` | 192.168.1.50 | Primary development machine (Docker, Node.js, source code) |
+| Arch Linux laptop | Arch Linux (rolling) | `devserver` | DHCP-assigned | Primary development machine (Docker, Node.js, source code) |
 | Orange Pi 3B | Debian (official/Armbian) | `orangepi3b` | 192.168.1.100 | Production server (Docker, Jellyfin, Caddy) |
 
 ---
@@ -18,12 +18,13 @@
 ## 2. Network & Hostnames
 
 - **Orange Pi 3B**: `orangepi3b.local` (Avahi/mDNS enabled)  
-- **Arch Linux laptop**: `devserver.local` (Avahi/mDNS enabled)  
-- **Windows PC**: If mDNS does not resolve, add entries to `C:\Windows\System32\drivers\etc\hosts`:
+- **Arch Linux laptop**: `devserver.local` (mDNS/Avahi is NOT installed)  
+- **Windows PC**: Because mDNS is not available on the dev laptop, add an entry to `C:\Windows\System32\drivers\etc\hosts` (edit as Administrator) pointing the laptop's IP to `devserver.local`:
   ```
   192.168.1.100   orangepi3b.local
-  192.168.1.50    devserver.local
+  <laptop-ip>     devserver.local
   ```
+  The laptop's IP is DHCP-assigned; check it with `ip -4 addr` or `hostname -I`. Port forwarding is **not** required — Windows and the laptop are on the same LAN.
 
 All services use these hostnames. **Never hardcode IP addresses in application code.**
 
@@ -67,15 +68,18 @@ Test with: `docker run hello-world`
 
 ### 3.4 VS Code Remote‑SSH from Windows
 
+The laptop's SSH server (`sshd`) is enabled and listening on port 22. No port forwarding is needed — the connection is direct on the local network.
+
 1. Install VS Code on Windows and the **Remote – SSH** extension.  
 2. Generate SSH key pair on Windows (PowerShell):
    ```powershell
-   ssh-keygen -t rsa -b 4096
+   ssh-keygen -t ed25519
    ```
 3. Copy the public key to the Arch laptop:
    ```powershell
    ssh-copy-id youruser@devserver.local
    ```
+   (If `devserver.local` does not resolve, add the hosts entry from §2 or use the laptop's IP.)
 4. In VS Code, press `F1`, choose **Remote‑SSH: Connect to Host…**, enter `youruser@devserver.local`.
 
 You will now have a full Linux development environment accessible from Windows.
