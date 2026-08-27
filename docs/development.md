@@ -223,7 +223,15 @@ docker compose ps
 docker compose logs -f
 ```
 
-### 7.4 Update Services
+### 7.4 Set Jellyfin Base URL
+
+Caddy serves Jellyfin under the `/api` path. After Jellyfin starts, set its base URL so Jellyfin generates `/api`-prefixed URLs:
+
+1. Open `http://orangepi3b.local/api/web/` and log in as admin.
+2. Go to **Dashboard → Networking** and set **Base URL** to `/api`.
+3. Save. Jellyfin restarts and is reachable at `http://orangepi3b.local/api/`.
+
+### 7.5 Update Services
 
 When the code or configuration changes:
 

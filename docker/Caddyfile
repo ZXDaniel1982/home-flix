@@ -1,3 +1,8 @@
 http://orangepi3b.local {
-	reverse_proxy jellyfin:8096
+	handle /api/* {
+		reverse_proxy jellyfin:8096
+	}
+	handle {
+		respond "Home Flix frontend — coming soon" 200
+	}
 }

@@ -162,6 +162,8 @@ Transcoding is disabled inside Jellyfin (Dashboard → Playback → Transcoding 
 
 ## 8. Jellyfin Configuration
 
+- **Base URL:** `/api` — set in Dashboard → Networking → Base URL so Jellyfin is served under the `/api` path by Caddy. This makes all Jellyfin-generated URLs (images, stream URLs, web UI) carry the `/api` prefix.
+
 - **Libraries:**  
   - Movies → `/media/movies`  
   - TV Shows → `/media/tvshows`  
