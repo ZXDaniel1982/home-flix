@@ -1,4 +1,18 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - media-net
+
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
@@ -6,8 +20,6 @@ services:
     user: "1000:1000"
     environment:
       - TZ=${TZ:-Pacific/Auckland}
-    ports:
-      - "8096:8096"
     volumes:
       - /mnt/ssd/jellyfin/config:/config
       - /mnt/ssd/jellyfin/cache:/cache
@@ -18,3 +30,7 @@ services:
 networks:
   media-net:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

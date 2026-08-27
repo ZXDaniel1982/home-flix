@@ -1,0 +1,3 @@
+http://orangepi3b.local {
+	reverse_proxy jellyfin:8096
+}
