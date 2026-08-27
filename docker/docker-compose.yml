@@ -1,0 +1,20 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      - TZ=${TZ:-Asia/Shanghai}
+    ports:
+      - "8096:8096"
+    volumes:
+      - /mnt/ssd/jellyfin/config:/config
+      - /mnt/ssd/jellyfin/cache:/cache
+      - /mnt/ssd/media:/media:ro
+    networks:
+      - media-net
+
+networks:
+  media-net:
+    driver: bridge

@@ -25,7 +25,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 1.3 — Jellyfin Deployment
 
-- [ ] 1.3.1 — Create docker-compose for Jellyfin: Define service with config/cache/media volumes, no transcoding. *(MVP, M)*
+- [x] 1.3.1 — Create docker-compose for Jellyfin: Define service with config/cache/media volumes, no transcoding. *(MVP, M)*
 - [ ] 1.3.2 — Deploy Jellyfin container: Start container, access web UI, complete setup wizard. *(MVP, S)*
 - [ ] 1.3.3 — Configure media libraries: Add Movies and TV Shows libraries. *(MVP, S)*
 - [ ] 1.3.4 — Disable transcoding globally: Set hardware acceleration to None, disable transcoding. *(MVP, S)*
