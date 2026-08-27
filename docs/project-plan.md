@@ -19,9 +19,9 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 1.2 — Orange Pi 3B Server Setup
 
-- [ ] 1.2.1 — Install Docker and Docker Compose: Use official script, verify ARM64 images work. *(MVP, S)*
-- [ ] 1.2.2 — Mount SSD and HDD: Create mount points, fstab entries, set permissions. *(MVP, S)*
-- [ ] 1.2.3 — Enable mDNS/hostname: Set hostname to `orangepi3b`, install Avahi, verify resolution. *(MVP, S)*
+- [x] 1.2.1 — Install Docker and Docker Compose: Use official script, verify ARM64 images work. *(MVP, S)*
+- [x] 1.2.2 — Mount SSD and HDD: Create mount points, fstab entries, set permissions. *(MVP, S)*
+- [x] 1.2.3 — Enable mDNS/hostname: Set hostname to `orangepi3b`, install Avahi, verify resolution. *(MVP, S)*
 
 ### Epic 1.3 — Jellyfin Deployment
 
