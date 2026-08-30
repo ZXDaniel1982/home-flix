@@ -1,11 +1,21 @@
 <script lang="ts">
+	import '../app.css';
+	import NavBar from '$lib/components/NavBar.svelte';
 	import favicon from '$lib/assets/favicon.svg';
+	import { theme } from '$lib/theme.svelte';
 
 	let { children } = $props();
+
+	$effect(() => {
+		document.documentElement.setAttribute('data-theme', theme.current);
+	});
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+<NavBar />
+<main>
+	{@render children()}
+</main>
