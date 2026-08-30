@@ -50,7 +50,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [x] 2.1.1 — Initialize SvelteKit project: Use `npm create svelte@latest`, set up Tailwind if desired. *(MVP, S)*
 - [x] 2.1.2 — Set up routing and layout: Create root layout, navigation bar, dark theme. *(MVP, M)*
 - [x] 2.1.3 — Implement Jellyfin API client: Module for fetch calls, auth token handling. *(MVP, M)*
-- [ ] 2.1.4 — Configure environment variables: `.env` for dev API URL, Vite proxy to Jellyfin. *(MVP, S)*
+- [x] 2.1.4 — Configure environment variables: `.env` for dev API URL, Vite proxy to Jellyfin. *(MVP, S)*
 
 ### Epic 2.2 — Authentication
 
