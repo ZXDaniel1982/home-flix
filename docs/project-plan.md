@@ -35,7 +35,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 1.4.1 — Deploy Caddy container: Add Caddy service, configure reverse proxy. *(MVP, M)*
 - [x] 1.4.2 — Configure Caddyfile: Proxy `/api` to Jellyfin and `/` to static frontend later. *(MVP, S)*
-- [ ] 1.4.3 — Verify access from Windows and Android: Test `http://orangepi3b.local` from both. *(MVP, S)*
+- [x] 1.4.3 — Verify access from Windows and Android: Test `http://orangepi3b.local` from both. *(MVP, S)*
 
 **Dependencies:** 1.1 → 1.2 → 1.3 → 1.4 (some tasks can overlap after Docker is installed).
 
