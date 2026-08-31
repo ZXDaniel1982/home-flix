@@ -12,6 +12,7 @@ A private home media server and streaming system.
 
 - [Architecture](docs/architecture.md) — Jellyfin API endpoints and architectural decisions
 - [Development](docs/development.md) — development environment guide
+- [Setup](docs/setup.md) — fresh-install guide for the Orange Pi
 - [Project Plan](docs/project-plan.md) — modules, epics, and stories
 
 ## Hard Constraints

@@ -167,7 +167,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 5.1 — Project Documentation
 
-- [ ] 5.1.1 — Write setup guide: Instructions for fresh install on Orange Pi. *(MVP, M)*
+- [x] 5.1.1 — Write setup guide: Instructions for fresh install on Orange Pi. *(MVP, M)*
 - [ ] 5.1.2 — Document API usage: List key endpoints used by clients. *(Recommended, S)*
 - [ ] 5.1.3 — Create user guide: How to use web/app, add media. *(Optional, S)*
 
