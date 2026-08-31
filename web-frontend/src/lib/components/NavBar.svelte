@@ -17,6 +17,7 @@
 	<a class="brand" href="/">Home Flix</a>
 	<nav class="nav-links">
 		<a href="/">Home</a>
+		<a href="/movies">Movies</a>
 	</nav>
 	<div class="actions">
 		{#if user}

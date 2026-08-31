@@ -59,16 +59,16 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 2.3 — Movies Browsing
 
-- [ ] 2.3.1 — Movies list page: Fetch movies, display grid with posters. *(MVP, L)*
-- [ ] 2.3.2 — Movie poster component: Load images via Jellyfin image endpoint. *(MVP, M)*
-- [ ] 2.3.3 — Movie detail page: Show backdrop, metadata, play button. *(MVP, L)*
+- [x] 2.3.1 — Movies list page: Fetch movies, display grid with posters. *(MVP, L)*
+- [x] 2.3.2 — Movie poster component: Load images via Jellyfin image endpoint. *(MVP, M)*
+- [x] 2.3.3 — Movie detail page: Show backdrop, metadata, play button. *(MVP, L)*
 - [ ] 2.3.4 — Pagination / infinite scroll: Load more movies when scrolling. *(Recommended, M)*
 
 ### Epic 2.4 — Video Playback
 
-- [ ] 2.4.1 — Video player page: Embed HTML5 video, use direct stream URL. *(MVP, L)*
-- [ ] 2.4.2 — Playback error handling: Show friendly message if file cannot be played. *(MVP, S)*
-- [ ] 2.4.3 — Basic player controls: Native controls for MVP; later custom controls with resume. *(MVP, S)*
+- [x] 2.4.1 — Video player page: Embed HTML5 video, use direct stream URL. *(MVP, L)*
+- [x] 2.4.2 — Playback error handling: Show friendly message if file cannot be played. *(MVP, S)*
+- [x] 2.4.3 — Basic player controls: Native controls for MVP; later custom controls with resume. *(MVP, S)*
 - [ ] 2.4.4 — Resume playback: Fetch progress, seek, send updates. *(Recommended, M)*
 
 ### Epic 2.5 — TV Series (Phase 2)
