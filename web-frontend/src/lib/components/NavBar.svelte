@@ -1,8 +1,16 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { theme, toggleTheme } from '$lib/theme.svelte';
+	import { clearSession, getUser } from '$lib/api/session';
 
 	const label = $derived(theme.current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
 	const text = $derived(theme.current === 'dark' ? 'Light' : 'Dark');
+	const user = getUser();
+
+	function handleLogout() {
+		clearSession();
+		goto('/login');
+	}
 </script>
 
 <header class="navbar">
@@ -10,9 +18,15 @@
 	<nav class="nav-links">
 		<a href="/">Home</a>
 	</nav>
-	<button class="theme-toggle" type="button" aria-label={label} onclick={toggleTheme}>
-		{text}
-	</button>
+	<div class="actions">
+		{#if user}
+			<span class="user">{user.Name}</span>
+			<button class="logout" type="button" onclick={handleLogout}>Sign out</button>
+		{/if}
+		<button class="theme-toggle" type="button" aria-label={label} onclick={toggleTheme}>
+			{text}
+		</button>
+	</div>
 </header>
 
 <style>
@@ -40,8 +54,20 @@
 		gap: 1rem;
 	}
 
-	.theme-toggle {
+	.actions {
 		margin-left: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.user {
+		font-size: 0.875rem;
+		color: var(--color-text-muted);
+	}
+
+	.logout,
+	.theme-toggle {
 		padding: 0.4rem 0.75rem;
 		border: 1px solid var(--color-border);
 		border-radius: 0.375rem;
@@ -50,6 +76,7 @@
 		cursor: pointer;
 	}
 
+	.logout:hover,
 	.theme-toggle:hover {
 		border-color: var(--color-accent);
 	}

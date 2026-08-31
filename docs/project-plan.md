@@ -54,8 +54,8 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 2.2 — Authentication
 
-- [ ] 2.2.1 — Login page: Form for username/password, call authenticate, store token. *(MVP, M)*
-- [ ] 2.2.2 — Route guard: Redirect to login if no token, logout button. *(MVP, S)*
+- [x] 2.2.1 — Login page: Form for username/password, call authenticate, store token. *(MVP, M)*
+- [x] 2.2.2 — Route guard: Redirect to login if no token, logout button. *(MVP, S)*
 
 ### Epic 2.3 — Movies Browsing
 

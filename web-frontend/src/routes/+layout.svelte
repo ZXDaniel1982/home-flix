@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import NavBar from '$lib/components/NavBar.svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { theme } from '$lib/theme.svelte';
 
@@ -15,7 +14,4 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<NavBar />
-<main>
-	{@render children()}
-</main>
+{@render children()}
