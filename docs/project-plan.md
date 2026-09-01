@@ -62,7 +62,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [x] 2.3.1 — Movies list page: Fetch movies, display grid with posters. *(MVP, L)*
 - [x] 2.3.2 — Movie poster component: Load images via Jellyfin image endpoint. *(MVP, M)*
 - [x] 2.3.3 — Movie detail page: Show backdrop, metadata, play button. *(MVP, L)*
-- [ ] 2.3.4 — Pagination / infinite scroll: Load more movies when scrolling. *(Recommended, M)*
+- [x] 2.3.4 — Pagination / infinite scroll: Load more movies when scrolling. *(Recommended, M)*
 
 ### Epic 2.4 — Video Playback
 
