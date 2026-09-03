@@ -144,7 +144,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 4.1.1 — Test Jellyfin API: Verify auth, library, playback info endpoints using curl/Postman. *(MVP, S)*
 - [x] 4.1.2 — Test direct streaming: Try multiple formats (H.264 MP4, H.265 MKV, subtitles). *(MVP, M)*
-- [ ] 4.1.3 — Performance test: Stream 2-3 concurrent videos, monitor CPU/RAM on Orange Pi. *(Recommended, M)*
+- [x] 4.1.3 — Performance test: Stream 2-3 concurrent videos, monitor CPU/RAM on Orange Pi. *(Recommended, M)*
 
 ### Epic 4.2 — Web Frontend Tests
 
