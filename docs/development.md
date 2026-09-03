@@ -9,8 +9,8 @@
 
 | Machine | OS | Hostname | IP (example) | Role |
 |---------|----|----------|--------------|------|
-| Windows PC | Windows 10/11 | — | 192.168.1.20 | Android development, VS Code Remote‑SSH client |
-| Arch Linux laptop | Arch Linux (rolling) | `devserver` | DHCP-assigned | Primary development machine (Docker, Node.js, source code) |
+| Windows PC | Windows 10/11 | — | 192.168.1.20 | Android emulator/device testing (MuMu Player), VS Code Remote‑SSH client |
+| Arch Linux laptop | Arch Linux (rolling) | `devserver` | DHCP-assigned | Primary development machine (Docker, Node.js, source code, headless Android build) |
 | Orange Pi 3B | Armbian 13 | `orangepi3b` | 192.168.1.100 | Production server (Docker, Jellyfin, Caddy) |
 
 ---
@@ -88,7 +88,7 @@ You will now have a full Linux development environment accessible from Windows.
 
 ## 4. Repository Structure
 
-Clone the repository on the Arch laptop (and optionally on Windows for Android Studio):
+Clone the repository on the Arch laptop (and optionally on Windows for VS Code Remote‑SSH):
 
 ```bash
 git clone https://github.com/yourusername/home-media-server.git
@@ -100,7 +100,7 @@ The repository is a **monorepo** containing:
 ```
 home-media-server/
 ├── web-frontend/      # SvelteKit app
-├── android-app/       # Android Studio project
+├── android-app/       # Gradle project (Kotlin + Compose)
 ├── docker/            # Docker Compose and Caddyfile
 ├── scripts/           # Utility scripts
 ├── docs/              # Documentation (including this file)
@@ -148,14 +148,18 @@ The built static files are served by Caddy or Nginx on the Orange Pi.
 
 ### 6.1 Environment
 
-- **IDE**: Android Studio (runs natively on Windows).  
-- **SDK**: Minimum API 24, target latest.  
-- **Language**: Kotlin with Jetpack Compose.  
+Android development happens entirely on the **Arch Linux laptop**, headless (CLI-only, no GUI):
+
+- **Toolchain**: JDK 17 + Android SDK command-line tools + Gradle wrapper. No Android Studio, no emulator/KVM.
+- **Editing**: opencode, or VS Code on the Windows PC via Remote-SSH to the Arch laptop.
+- **SDK**: Minimum API 24, compile/target latest (35+).
+- **Language**: Kotlin with Jetpack Compose.
 - **Key libraries**: `jellyfin-sdk-kotlin`, `Media3 ExoPlayer`, `Coil`, `Navigation Compose`.
 
 ### 6.2 Build
 
-Open the `android-app/` folder in Android Studio (on Windows).  
+Build on the Arch laptop from the `android-app/` directory (CLI):
+
 Debug build:
 
 ```bash
@@ -179,6 +183,20 @@ The Android app should **not** hardcode the server address. Instead:
 - Optionally provide a default via `BuildConfig` field set in `build.gradle.kts`.
 
 **For testing**, set the app to point to `http://devserver.local` or `http://orangepi3b.local`.
+
+### 6.4 Testing on Windows (emulator)
+
+The Arch laptop is headless (no emulator/KVM). To run the app:
+
+1. Build the APK on the Arch laptop (`./gradlew assembleDebug`).
+2. Copy it to the Windows PC:
+   ```bash
+   scp app/build/outputs/apk/debug/app-debug.apk <user>@<windows-ip>:~/Downloads/
+   ```
+3. Install it into an emulator such as MuMu Player:
+   ```bash
+   adb install app-debug.apk
+   ```
 
 ---
 

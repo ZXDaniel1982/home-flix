@@ -75,8 +75,8 @@ The system is designed for personal use within a home network and does **not** r
 | Machine | OS | Hostname | Purpose |
 |---------|----|----------|---------|
 | Orange Pi 3B | Armbian 13 | `orangepi3b.local` | Production server, runs Docker containers. |
-| Arch Linux laptop | Arch Linux (rolling) | `devserver.local` | Development and testing environment. |
-| Windows PC | Windows 10/11 | — | Android development (Android Studio) and VS Code remote access. |
+| Arch Linux laptop | Arch Linux (rolling) | `devserver.local` | Development and testing environment; headless Android build (CLI, no GUI/emulator). |
+| Windows PC | Windows 10/11 | — | VS Code Remote-SSH client; Android emulator/device testing (e.g., MuMu Player). |
 
 ### 4.1 Hardware Resources
 
@@ -87,8 +87,8 @@ The system is designed for personal use within a home network and does **not** r
   - Network: Gigabit Ethernet  
   - OS: Armbian 13 (kernel 6.18.46‑current‑rockchip64)
 
-- **Arch Linux laptop** (development)  
-- **Windows PC** (Android development and remote access)
+- **Arch Linux laptop** (development, headless Android build)  
+- **Windows PC** (Android emulator/device testing and remote access)
 
 ---
 
@@ -274,8 +274,8 @@ Clients use a subset of Jellyfin’s REST API. All requests include the access t
    - Build on Arch laptop (`npm run build`).
    - Copy static files to Orange Pi (`scp` or via Docker image).
 2. Android app
-   - Build APK on Windows PC.
-   - Install directly on device.
+   - Build APK on Arch laptop (headless: `./gradlew assembleDebug`).
+   - Copy APK to Windows PC (`scp`) and install in an emulator (e.g., MuMu Player) or on a device.
 3. Docker configs
    - Update `docker-compose.yml` in repo.
    - Pull on Orange Pi and restart containers.
