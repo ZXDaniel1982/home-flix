@@ -52,7 +52,7 @@
 	<div class="grid">
 		{#each results as item (item.Id)}
 			<a class="card" href={href(item)}>
-				<MoviePoster item={item} />
+				<MoviePoster {item} />
 				<span class="title">{item.Name}</span>
 			</a>
 		{/each}
@@ -74,6 +74,12 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: 1.25rem;
+	}
+
+	@media (max-width: 40rem) {
+		.grid {
+			grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		}
 	}
 
 	.card {

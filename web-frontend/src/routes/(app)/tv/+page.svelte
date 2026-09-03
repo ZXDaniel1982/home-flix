@@ -90,6 +90,12 @@
 		gap: 1.25rem;
 	}
 
+	@media (max-width: 40rem) {
+		.grid {
+			grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		}
+	}
+
 	.card {
 		display: flex;
 		flex-direction: column;

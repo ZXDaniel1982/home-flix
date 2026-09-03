@@ -84,7 +84,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 2.7 — Polish & Responsive
 
-- [ ] 2.7.1 — Responsive layout: Ensure mobile/tablet usability. *(Recommended, M)*
+- [x] 2.7.1 — Responsive layout: Ensure mobile/tablet usability. *(Recommended, M)*
 - [ ] 2.7.2 — Loading skeletons: Show placeholders while fetching. *(Optional, S)*
 - [ ] 2.7.3 — Error pages: Handle API failures gracefully. *(Optional, S)*
 
