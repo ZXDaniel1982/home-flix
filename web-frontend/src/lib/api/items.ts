@@ -58,3 +58,25 @@ export async function getEpisodes(seasonId: string): Promise<BaseItemDto[]> {
 	);
 	return result.Items ?? [];
 }
+
+export async function search(query: string, limit = 50): Promise<BaseItemDto[]> {
+	const user = getUser();
+	if (!user) {
+		throw new Error('Not authenticated');
+	}
+	const result = await apiFetch<QueryResult<BaseItemDto>>(
+		`/Users/${user.Id}/Items?searchTerm=${encodeURIComponent(query)}&Recursive=true&IncludeItemTypes=Movie,Series&SortBy=SortName&Limit=${limit}`
+	);
+	return result.Items ?? [];
+}
+
+export async function getResume(limit = 30): Promise<BaseItemDto[]> {
+	const user = getUser();
+	if (!user) {
+		throw new Error('Not authenticated');
+	}
+	const result = await apiFetch<QueryResult<BaseItemDto>>(
+		`/Users/${user.Id}/Items/Resume?IncludeItemTypes=Movie,Episode&Limit=${limit}`
+	);
+	return result.Items ?? [];
+}

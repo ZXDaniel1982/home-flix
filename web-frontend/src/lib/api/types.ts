@@ -22,6 +22,8 @@ export interface UserData {
 export interface BaseItemDto {
 	Id: string;
 	Name: string;
+	Type?: string;
+	SeriesId?: string;
 	ProductionYear?: number;
 	IndexNumber?: number;
 	ImageTags?: Record<string, string>;

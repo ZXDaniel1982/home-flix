@@ -79,8 +79,8 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 2.6 — Search & Continue Watching
 
-- [ ] 2.6.1 — Search bar: Search endpoint, display results. *(Recommended, M)*
-- [ ] 2.6.2 — Continue Watching row: Fetch `/Items/Resume`, display on home. *(Recommended, M)*
+- [x] 2.6.1 — Search bar: Search endpoint, display results. *(Recommended, M)*
+- [x] 2.6.2 — Continue Watching row: Fetch `/Items/Resume`, display on home. *(Recommended, M)*
 
 ### Epic 2.7 — Polish & Responsive
 

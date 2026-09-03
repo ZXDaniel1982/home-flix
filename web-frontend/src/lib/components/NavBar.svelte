@@ -7,9 +7,19 @@
 	const text = $derived(theme.current === 'dark' ? 'Light' : 'Dark');
 	const user = getUser();
 
+	let query = $state('');
+
 	function handleLogout() {
 		clearSession();
 		goto('/login');
+	}
+
+	function handleSearch(event: SubmitEvent) {
+		event.preventDefault();
+		const q = query.trim();
+		if (q) {
+			goto(`/search?q=${encodeURIComponent(q)}`);
+		}
 	}
 </script>
 
@@ -20,6 +30,9 @@
 		<a href="/movies">Movies</a>
 		<a href="/tv">TV</a>
 	</nav>
+	<form class="search" onsubmit={handleSearch}>
+		<input type="search" bind:value={query} placeholder="Search" aria-label="Search" />
+	</form>
 	<div class="actions">
 		{#if user}
 			<span class="user">{user.Name}</span>
@@ -54,6 +67,15 @@
 	.nav-links {
 		display: flex;
 		gap: 1rem;
+	}
+
+	.search input {
+		padding: 0.4rem 0.75rem;
+		border: 1px solid var(--color-border);
+		border-radius: 0.375rem;
+		background-color: var(--color-bg);
+		color: var(--color-text);
+		width: 12rem;
 	}
 
 	.actions {
