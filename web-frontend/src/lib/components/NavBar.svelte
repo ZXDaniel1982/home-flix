@@ -18,6 +18,7 @@
 	<nav class="nav-links">
 		<a href="/">Home</a>
 		<a href="/movies">Movies</a>
+		<a href="/tv">TV</a>
 	</nav>
 	<div class="actions">
 		{#if user}

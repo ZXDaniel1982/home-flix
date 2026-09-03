@@ -73,9 +73,9 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 2.5 — TV Series (Phase 2)
 
-- [ ] 2.5.1 — TV series list page: Fetch series, display posters. *(Recommended, M)*
-- [ ] 2.5.2 — Season and episode navigation: Show seasons, then episodes. *(Recommended, L)*
-- [ ] 2.5.3 — Episode playback: Reuse video player for episodes. *(Recommended, M)*
+- [x] 2.5.1 — TV series list page: Fetch series, display posters. *(Recommended, M)*
+- [x] 2.5.2 — Season and episode navigation: Show seasons, then episodes. *(Recommended, L)*
+- [x] 2.5.3 — Episode playback: Reuse video player for episodes. *(Recommended, M)*
 
 ### Epic 2.6 — Search & Continue Watching
 

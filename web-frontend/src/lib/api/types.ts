@@ -23,6 +23,7 @@ export interface BaseItemDto {
 	Id: string;
 	Name: string;
 	ProductionYear?: number;
+	IndexNumber?: number;
 	ImageTags?: Record<string, string>;
 	BackdropImageTags?: string[];
 	Overview?: string;
