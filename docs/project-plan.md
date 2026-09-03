@@ -69,7 +69,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [x] 2.4.1 — Video player page: Embed HTML5 video, use direct stream URL. *(MVP, L)*
 - [x] 2.4.2 — Playback error handling: Show friendly message if file cannot be played. *(MVP, S)*
 - [x] 2.4.3 — Basic player controls: Native controls for MVP; later custom controls with resume. *(MVP, S)*
-- [ ] 2.4.4 — Resume playback: Fetch progress, seek, send updates. *(Recommended, M)*
+- [x] 2.4.4 — Resume playback: Fetch progress, seek, send updates. *(Recommended, M)*
 
 ### Epic 2.5 — TV Series (Phase 2)
 

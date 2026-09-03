@@ -14,6 +14,11 @@ export interface AuthenticationResult {
 	ServerId: string;
 }
 
+export interface UserData {
+	PlaybackPositionTicks?: number;
+	PlayedPercentage?: number;
+}
+
 export interface BaseItemDto {
 	Id: string;
 	Name: string;
@@ -23,6 +28,7 @@ export interface BaseItemDto {
 	Overview?: string;
 	RunTimeTicks?: number;
 	Genres?: string[];
+	UserData?: UserData;
 }
 
 export interface QueryResult<T> {
