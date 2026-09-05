@@ -100,7 +100,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 3.1 — Project Setup
 
-- [ ] 3.1.1 — Create Android project: Scaffold a Gradle project (Kotlin + Compose, no Android Studio), minSdk 24+. *(MVP, S)*
+- [x] 3.1.1 — Create Android project: Scaffold a Gradle project (Kotlin + Compose, no Android Studio), minSdk 24+. *(MVP, S)*
 - [ ] 3.1.2 — Add dependencies: jellyfin-sdk-kotlin, Media3 ExoPlayer, Coil, Navigation Compose. *(MVP, M)*
 - [ ] 3.1.3 — Set up navigation graph: Routes for login, movies, detail, player. *(MVP, M)*
 
