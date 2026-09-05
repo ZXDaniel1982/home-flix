@@ -148,8 +148,8 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 4.2 — Web Frontend Tests
 
-- [ ] 4.2.1 — Unit tests for API client: Mock fetch, test error handling. *(Recommended, M)*
-- [ ] 4.2.2 — E2E test with Playwright: Automate login → browse movie → play. *(Recommended, L)*
+- [x] 4.2.1 — Unit tests for API client: Mock fetch, test error handling. *(Recommended, M)*
+- [x] 4.2.2 — E2E test with Playwright: Automate login → browse movie → play. *(Recommended, L)*
 
 ### Epic 4.3 — Android Tests
 
