@@ -96,9 +96,11 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 **Goal:** Native Android application with the same functionality as the web app.
 
+**Development environment (headless):** The app is developed and built **entirely on the Arch Linux laptop, headless** (CLI only). Toolchain: JDK 17 + Android SDK command-line tools + Gradle wrapper — **no Android Studio, no emulator, no KVM**. Editing via opencode or VS Code Remote-SSH from the Windows PC. Build with `./gradlew assembleDebug`, copy the APK to the Windows PC (`scp`), and test it in an emulator (MuMu Player) via `adb install`. The Android SDK install itself is out-of-band (one `sudo pacman` step for JDK/Gradle, run manually).
+
 ### Epic 3.1 — Project Setup
 
-- [ ] 3.1.1 — Create Android project: Use Compose template, minSdk 24+. *(MVP, S)*
+- [ ] 3.1.1 — Create Android project: Scaffold a Gradle project (Kotlin + Compose, no Android Studio), minSdk 24+. *(MVP, S)*
 - [ ] 3.1.2 — Add dependencies: jellyfin-sdk-kotlin, Media3 ExoPlayer, Coil, Navigation Compose. *(MVP, M)*
 - [ ] 3.1.3 — Set up navigation graph: Routes for login, movies, detail, player. *(MVP, M)*
 
@@ -153,9 +155,11 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 4.3 — Android Tests
 
+**Test environment:** Unit tests (4.3.1) run headless on the Arch laptop via `./gradlew test`. Instrumented/UI tests (4.3.2) require a device or emulator, so they run against the Windows emulator (MuMu Player) via `adb` — not on the headless build machine.
+
 - [ ] 4.3.1 — Unit tests for ViewModels: Test API calls, state management. *(Recommended, M)*
-- [ ] 4.3.2 — UI tests with Compose test: Test navigation, login screen. *(Recommended, M)*
-- [ ] 4.3.3 — Manual testing on device: Install APK, test playback, seek, resume. *(MVP, M)*
+- [ ] 4.3.2 — UI tests with Compose test: Test navigation, login screen (run on Windows emulator via adb). *(Recommended, M)*
+- [ ] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume. *(MVP, M)*
 
 **Dependencies:** 4.1 after 1.3; 4.2 after 2.3; 4.3 after 3.3.
 
