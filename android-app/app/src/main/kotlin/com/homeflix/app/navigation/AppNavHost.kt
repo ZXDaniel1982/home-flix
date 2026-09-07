@@ -11,12 +11,23 @@ import com.homeflix.app.ui.screens.LoginScreen
 import com.homeflix.app.ui.screens.MovieDetailScreen
 import com.homeflix.app.ui.screens.MoviesScreen
 import com.homeflix.app.ui.screens.PlayerScreen
+import com.homeflix.app.ui.screens.ServerUrlScreen
 
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN, modifier = modifier) {
+    NavHost(navController = navController, startDestination = Routes.SERVER, modifier = modifier) {
+        composable(Routes.SERVER) {
+            ServerUrlScreen(
+                onSaved = {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SERVER) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLogin = {

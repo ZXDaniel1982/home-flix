@@ -1,6 +1,7 @@
 package com.homeflix.app.navigation
 
 object Routes {
+    const val SERVER = "server"
     const val LOGIN = "login"
     const val MOVIES = "movies"
     const val MOVIE_DETAIL = "movie/{movieId}"
