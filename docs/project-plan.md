@@ -113,7 +113,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 ### Epic 3.3 — Movies Browsing
 
 - [x] 3.3.1 — Movies list screen: Fetch movies, display grid using LazyVerticalGrid. *(MVP, L)*
-- [ ] 3.3.2 — Movie detail screen: Show poster, metadata, play button. *(MVP, L)*
+- [x] 3.3.2 — Movie detail screen: Show poster, metadata, play button. *(MVP, L)*
 - [ ] 3.3.3 — Image loading with Coil: Load posters efficiently. *(MVP, S)*
 
 ### Epic 3.4 — Video Playback

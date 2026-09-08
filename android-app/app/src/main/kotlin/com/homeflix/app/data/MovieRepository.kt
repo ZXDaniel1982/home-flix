@@ -3,6 +3,7 @@ package com.homeflix.app.data
 import java.util.UUID
 import kotlinx.coroutines.flow.first
 import org.jellyfin.sdk.api.client.extensions.itemsApi
+import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemSortBy
@@ -11,6 +12,8 @@ import org.jellyfin.sdk.model.api.request.GetItemsRequest
 
 interface MovieRepository {
     suspend fun getMovies(startIndex: Int, limit: Int): List<BaseItemDto>
+
+    suspend fun getMovie(itemId: String): BaseItemDto
 }
 
 class JellyfinMovieRepository(
@@ -37,5 +40,17 @@ class JellyfinMovieRepository(
             )
         )
         return response.content.items.orEmpty()
+    }
+
+    override suspend fun getMovie(itemId: String): BaseItemDto {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        return api.userLibraryApi.getItem(
+            userId = UUID.fromString(session.userId),
+            itemId = UUID.fromString(itemId)
+        ).content
     }
 }
