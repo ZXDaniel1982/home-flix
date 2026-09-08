@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.homeflix.app.navigation.AppNavHost
+import com.homeflix.app.ui.SessionViewModel
 import com.homeflix.app.ui.theme.HomeFlixTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,8 +20,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HomeFlixTheme {
+                val sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    AppNavHost(Modifier.padding(innerPadding))
+                    AppNavHost(
+                        sessionViewModel = sessionViewModel,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }

@@ -108,7 +108,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 3.2.1 — Server URL configuration screen: User can enter server address, store in DataStore. *(MVP, M)*
 - [x] 3.2.2 — Login screen: Authenticate with Jellyfin API, store token. *(MVP, M)*
-- [ ] 3.2.3 — Session management: Handle token expiry, logout. *(MVP, S)*
+- [x] 3.2.3 — Session management: Handle token expiry, logout. *(MVP, S)*
 
 ### Epic 3.3 — Movies Browsing
 
