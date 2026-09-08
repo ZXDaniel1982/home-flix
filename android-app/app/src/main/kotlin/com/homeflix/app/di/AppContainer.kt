@@ -5,7 +5,9 @@ import com.homeflix.app.data.AuthService
 import com.homeflix.app.data.DataStoreSessionRepository
 import com.homeflix.app.data.DataStoreSettingsRepository
 import com.homeflix.app.data.JellyfinAuthService
+import com.homeflix.app.data.JellyfinMovieRepository
 import com.homeflix.app.data.JellyfinProvider
+import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
 import com.homeflix.app.data.dataStore
@@ -26,5 +28,9 @@ class AppContainer(context: Context) {
 
     val authService: AuthService by lazy {
         JellyfinAuthService(jellyfinProvider)
+    }
+
+    val movieRepository: MovieRepository by lazy {
+        JellyfinMovieRepository(jellyfinProvider, settingsRepository, sessionRepository)
     }
 }
