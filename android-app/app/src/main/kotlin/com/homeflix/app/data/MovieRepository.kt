@@ -1,11 +1,13 @@
 package com.homeflix.app.data
 
 import java.util.UUID
+import android.net.Uri
 import kotlinx.coroutines.flow.first
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
+import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.SortOrder
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
@@ -14,7 +16,21 @@ interface MovieRepository {
     suspend fun getMovies(startIndex: Int, limit: Int): List<BaseItemDto>
 
     suspend fun getMovie(itemId: String): BaseItemDto
+
+    suspend fun imageCredentials(): ImageCredentials
 }
+
+data class ImageCredentials(val baseUrl: String, val accessToken: String)
+
+fun buildImageUrl(
+    baseUrl: String,
+    accessToken: String,
+    itemId: String,
+    imageTag: String,
+    imageType: ImageType
+): String =
+    "${baseUrl.trimEnd('/')}/Items/$itemId/Images/${imageType.serialName}" +
+        "?tag=${Uri.encode(imageTag)}&api_key=${Uri.encode(accessToken)}"
 
 class JellyfinMovieRepository(
     private val jellyfinProvider: JellyfinProvider,
@@ -52,5 +68,13 @@ class JellyfinMovieRepository(
             userId = UUID.fromString(session.userId),
             itemId = UUID.fromString(itemId)
         ).content
+    }
+
+    override suspend fun imageCredentials(): ImageCredentials {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        return ImageCredentials(baseUrl = baseUrl, accessToken = session.accessToken)
     }
 }

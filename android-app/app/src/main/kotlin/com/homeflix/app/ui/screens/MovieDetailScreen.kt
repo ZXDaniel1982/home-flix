@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,8 +24,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import org.jellyfin.sdk.model.api.BaseItemDto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +83,7 @@ fun MovieDetailScreen(
             is MovieDetailViewModel.UiState.Success -> {
                 MovieDetailContent(
                     movie = state.movie,
+                    posterUrl = state.posterUrl,
                     onPlay = onPlay,
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -88,7 +93,12 @@ fun MovieDetailScreen(
 }
 
 @Composable
-private fun MovieDetailContent(movie: BaseItemDto, onPlay: () -> Unit, modifier: Modifier = Modifier) {
+private fun MovieDetailContent(
+    movie: BaseItemDto,
+    posterUrl: String?,
+    onPlay: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -99,14 +109,24 @@ private fun MovieDetailContent(movie: BaseItemDto, onPlay: () -> Unit, modifier:
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(2f / 3f)
+                .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = movie.name.orEmpty(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (posterUrl != null) {
+                AsyncImage(
+                    model = posterUrl,
+                    contentDescription = movie.name.orEmpty(),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(
+                    text = movie.name.orEmpty(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Text(

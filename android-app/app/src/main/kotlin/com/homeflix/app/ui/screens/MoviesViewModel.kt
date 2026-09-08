@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.homeflix.app.HomeFlixApplication
 import com.homeflix.app.data.MovieRepository
+import com.homeflix.app.data.buildImageUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -16,14 +17,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.ImageType
+
+data class MovieItem(
+    val id: String,
+    val name: String,
+    val imageUrl: String?
+)
 
 class MoviesViewModel(private val movieRepository: MovieRepository) : ViewModel() {
 
     sealed interface UiState {
         data object Loading : UiState
         data class Error(val message: String) : UiState
-        data class Success(val movies: List<BaseItemDto>) : UiState
+        data class Success(val movies: List<MovieItem>) : UiState
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -41,7 +48,26 @@ class MoviesViewModel(private val movieRepository: MovieRepository) : ViewModel(
             _uiState.value = UiState.Loading
             try {
                 val movies = movieRepository.getMovies(startIndex = 0, limit = PAGE_SIZE)
-                _uiState.value = UiState.Success(movies)
+                val credentials = movieRepository.imageCredentials()
+                val items = movies.map { movie ->
+                    val tag = movie.imageTags?.get(ImageType.PRIMARY)
+                    MovieItem(
+                        id = movie.id.toString(),
+                        name = movie.name.orEmpty(),
+                        imageUrl = tag?.let {
+                            runCatching {
+                                buildImageUrl(
+                                    baseUrl = credentials.baseUrl,
+                                    accessToken = credentials.accessToken,
+                                    itemId = movie.id.toString(),
+                                    imageTag = it,
+                                    imageType = ImageType.PRIMARY
+                                )
+                            }.getOrNull()
+                        }
+                    )
+                }
+                _uiState.value = UiState.Success(items)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: InvalidStatusException) {

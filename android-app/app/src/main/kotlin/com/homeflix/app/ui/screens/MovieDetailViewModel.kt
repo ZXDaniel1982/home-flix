@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.homeflix.app.HomeFlixApplication
 import com.homeflix.app.data.MovieRepository
+import com.homeflix.app.data.buildImageUrl
 import com.homeflix.app.navigation.Routes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.ImageType
 
 class MovieDetailViewModel(
     private val movieRepository: MovieRepository,
@@ -31,7 +33,7 @@ class MovieDetailViewModel(
     sealed interface UiState {
         data object Loading : UiState
         data class Error(val message: String) : UiState
-        data class Success(val movie: BaseItemDto) : UiState
+        data class Success(val movie: BaseItemDto, val posterUrl: String?) : UiState
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -53,7 +55,20 @@ class MovieDetailViewModel(
             _uiState.value = UiState.Loading
             try {
                 val movie = movieRepository.getMovie(movieId)
-                _uiState.value = UiState.Success(movie)
+                val credentials = movieRepository.imageCredentials()
+                val tag = movie.imageTags?.get(ImageType.PRIMARY)
+                val posterUrl = tag?.let {
+                    runCatching {
+                        buildImageUrl(
+                            baseUrl = credentials.baseUrl,
+                            accessToken = credentials.accessToken,
+                            itemId = movieId,
+                            imageTag = it,
+                            imageType = ImageType.PRIMARY
+                        )
+                    }.getOrNull()
+                }
+                _uiState.value = UiState.Success(movie, posterUrl)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: InvalidStatusException) {
