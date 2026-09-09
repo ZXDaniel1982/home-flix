@@ -44,7 +44,8 @@ class ServerUrlViewModel(private val repository: SettingsRepository) : ViewModel
 
     private fun normalize(url: String): String {
         val withScheme = if (url.contains("://")) url else "http://$url"
-        return withScheme.trimEnd('/')
+        val trimmed = withScheme.trimEnd('/')
+        return if (trimmed.endsWith("/api")) trimmed else "$trimmed/api"
     }
 
     companion object {

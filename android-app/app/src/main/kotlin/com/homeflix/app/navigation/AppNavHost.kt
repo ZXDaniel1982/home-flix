@@ -70,9 +70,11 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
         composable(
             route = Routes.PLAYER,
             arguments = listOf(navArgument(Routes.ARG_MOVIE_ID) { type = NavType.StringType })
-        ) { backStackEntry ->
-            val movieId = backStackEntry.arguments?.getString(Routes.ARG_MOVIE_ID).orEmpty()
-            PlayerScreen(movieId = movieId)
+        ) {
+            PlayerScreen(
+                onBack = { navController.popBackStack() },
+                onLogout = sessionViewModel::logout
+            )
         }
     }
 }

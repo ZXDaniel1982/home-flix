@@ -39,7 +39,8 @@ fun ServerUrlScreen(
             value = serverUrl,
             onValueChange = viewModel::onUrlChange,
             label = { Text("Server address") },
-            placeholder = { Text("http://orangepi3b.local") },
+            placeholder = { Text("http://orangepi3b.local/api") },
+            supportingText = { Text("Enter the server address; /api is added automatically if missing.") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
