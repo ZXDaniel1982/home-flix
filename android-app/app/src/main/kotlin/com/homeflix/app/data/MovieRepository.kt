@@ -26,6 +26,12 @@ interface MovieRepository {
 
     suspend fun getMovie(itemId: String): BaseItemDto
 
+    suspend fun getTvSeries(startIndex: Int, limit: Int): List<BaseItemDto>
+
+    suspend fun getSeasons(seriesId: String): List<BaseItemDto>
+
+    suspend fun getEpisodes(seasonId: String): List<BaseItemDto>
+
     suspend fun getStream(itemId: String): PlaybackStream
 
     suspend fun imageCredentials(): ImageCredentials
@@ -96,6 +102,62 @@ class JellyfinMovieRepository(
             userId = UUID.fromString(session.userId),
             itemId = UUID.fromString(itemId)
         ).content
+    }
+
+    override suspend fun getTvSeries(startIndex: Int, limit: Int): List<BaseItemDto> {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        val response = api.itemsApi.getItems(
+            GetItemsRequest(
+                userId = UUID.fromString(session.userId),
+                startIndex = startIndex,
+                limit = limit,
+                recursive = true,
+                includeItemTypes = listOf(BaseItemKind.SERIES),
+                sortBy = listOf(ItemSortBy.SORT_NAME),
+                sortOrder = listOf(SortOrder.ASCENDING)
+            )
+        )
+        return response.content.items.orEmpty()
+    }
+
+    override suspend fun getSeasons(seriesId: String): List<BaseItemDto> {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        val response = api.itemsApi.getItems(
+            GetItemsRequest(
+                userId = UUID.fromString(session.userId),
+                parentId = UUID.fromString(seriesId),
+                includeItemTypes = listOf(BaseItemKind.SEASON),
+                sortBy = listOf(ItemSortBy.INDEX_NUMBER),
+                limit = 100
+            )
+        )
+        return response.content.items.orEmpty()
+    }
+
+    override suspend fun getEpisodes(seasonId: String): List<BaseItemDto> {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        val response = api.itemsApi.getItems(
+            GetItemsRequest(
+                userId = UUID.fromString(session.userId),
+                parentId = UUID.fromString(seasonId),
+                includeItemTypes = listOf(BaseItemKind.EPISODE),
+                sortBy = listOf(ItemSortBy.INDEX_NUMBER),
+                limit = 500
+            )
+        )
+        return response.content.items.orEmpty()
     }
 
     override suspend fun imageCredentials(): ImageCredentials {
