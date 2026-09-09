@@ -5,12 +5,19 @@ import android.net.Uri
 import kotlinx.coroutines.flow.first
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.mediaInfoApi
+import org.jellyfin.sdk.api.client.extensions.playStateApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.ItemSortBy
+import org.jellyfin.sdk.model.api.PlayMethod
 import org.jellyfin.sdk.model.api.PlaybackInfoDto
+import org.jellyfin.sdk.model.api.PlaybackProgressInfo
+import org.jellyfin.sdk.model.api.PlaybackStartInfo
+import org.jellyfin.sdk.model.api.PlaybackStopInfo
+import org.jellyfin.sdk.model.api.PlaybackOrder
+import org.jellyfin.sdk.model.api.RepeatMode
 import org.jellyfin.sdk.model.api.SortOrder
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
 
@@ -22,6 +29,12 @@ interface MovieRepository {
     suspend fun getStream(itemId: String): PlaybackStream
 
     suspend fun imageCredentials(): ImageCredentials
+
+    suspend fun reportPlaybackStarted(itemId: String, mediaSourceId: String, positionTicks: Long)
+
+    suspend fun reportPlaybackProgress(itemId: String, mediaSourceId: String, positionTicks: Long, isPaused: Boolean)
+
+    suspend fun reportPlaybackStopped(itemId: String, mediaSourceId: String, positionTicks: Long)
 }
 
 data class ImageCredentials(val baseUrl: String, val accessToken: String)
@@ -114,4 +127,61 @@ class JellyfinMovieRepository(
             mediaSourceId = mediaSourceId
         )
     }
+
+    override suspend fun reportPlaybackStarted(itemId: String, mediaSourceId: String, positionTicks: Long) {
+        val api = authenticatedApi()
+        api.playStateApi.reportPlaybackStart(
+            PlaybackStartInfo(
+                itemId = UUID.fromString(itemId),
+                mediaSourceId = mediaSourceId,
+                positionTicks = positionTicks,
+                playMethod = PlayMethod.DIRECT_PLAY,
+                canSeek = true,
+                isPaused = false,
+                isMuted = false,
+                repeatMode = RepeatMode.REPEAT_NONE,
+                playbackOrder = PlaybackOrder.DEFAULT
+            )
+        )
+    }
+
+    override suspend fun reportPlaybackProgress(
+        itemId: String,
+        mediaSourceId: String,
+        positionTicks: Long,
+        isPaused: Boolean
+    ) {
+        val api = authenticatedApi()
+        api.playStateApi.reportPlaybackProgress(
+            PlaybackProgressInfo(
+                itemId = UUID.fromString(itemId),
+                mediaSourceId = mediaSourceId,
+                positionTicks = positionTicks,
+                playMethod = PlayMethod.DIRECT_PLAY,
+                canSeek = true,
+                isPaused = isPaused,
+                isMuted = false,
+                repeatMode = RepeatMode.REPEAT_NONE,
+                playbackOrder = PlaybackOrder.DEFAULT
+            )
+        )
+    }
+
+    override suspend fun reportPlaybackStopped(itemId: String, mediaSourceId: String, positionTicks: Long) {
+        val api = authenticatedApi()
+        api.playStateApi.reportPlaybackStopped(
+            PlaybackStopInfo(
+                itemId = UUID.fromString(itemId),
+                mediaSourceId = mediaSourceId,
+                positionTicks = positionTicks,
+                failed = false
+            )
+        )
+    }
+
+    private suspend fun authenticatedApi() = jellyfinProvider.createApi(
+        baseUrl = settingsRepository.serverUrl.first().orEmpty(),
+        accessToken = sessionRepository.session.first()?.accessToken
+            ?: throw IllegalStateException("Not authenticated")
+    )
 }

@@ -1,5 +1,6 @@
 package com.homeflix.app.ui.screens
 
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,6 +98,10 @@ fun PlayerScreen(
             is PlayerViewModel.UiState.Success -> {
                 VideoPlayer(
                     streamUrl = state.stream.url,
+                    resumeTicks = state.resumeTicks,
+                    onReportStarted = viewModel::reportStarted,
+                    onReportProgress = viewModel::reportProgress,
+                    onReportStopped = viewModel::reportStopped,
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
             }
@@ -105,7 +110,14 @@ fun PlayerScreen(
 }
 
 @Composable
-private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
+private fun VideoPlayer(
+    streamUrl: String,
+    resumeTicks: Long,
+    onReportStarted: (Long) -> Unit,
+    onReportProgress: (Long, Boolean) -> Unit,
+    onReportStopped: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -115,6 +127,9 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
     var durationMs by remember(streamUrl) { mutableStateOf(0L) }
     var scrubPosition by remember(streamUrl) { mutableStateOf<Float?>(null) }
     var playbackError by remember(streamUrl) { mutableStateOf(false) }
+    var startedReported by remember(streamUrl) { mutableStateOf(false) }
+    var lastProgressAt by remember(streamUrl) { mutableStateOf(0L) }
+    var resumeSeekDone by remember(streamUrl) { mutableStateOf(false) }
 
     val player = remember(streamUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -139,11 +154,26 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
         val playerListener = object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
+                if (playing) {
+                    if (!startedReported) {
+                        startedReported = true
+                        lastProgressAt = SystemClock.elapsedRealtime()
+                        onReportStarted(msToTicks(player.currentPosition))
+                    }
+                } else if (startedReported) {
+                    onReportProgress(msToTicks(player.currentPosition), true)
+                }
             }
 
             override fun onPlaybackStateChanged(state: Int) {
                 durationMs = player.duration.takeIf { it > 0 } ?: 0L
                 isPlaying = player.isPlaying
+                if (state == Player.STATE_READY && !resumeSeekDone) {
+                    resumeSeekDone = true
+                    if (resumeTicks > 0) {
+                        player.seekTo(resumeTicks / 10_000)
+                    }
+                }
             }
 
             override fun onPlayerErrorChanged(error: PlaybackException?) {
@@ -155,13 +185,21 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
             player.removeListener(playerListener)
+            if (startedReported) {
+                onReportStopped(msToTicks(player.currentPosition))
+            }
             player.release()
         }
     }
 
     LaunchedEffect(player) {
         while (true) {
+            val now = SystemClock.elapsedRealtime()
             positionMs = player.currentPosition
+            if (startedReported && player.isPlaying && now - lastProgressAt >= PROGRESS_INTERVAL_MS) {
+                lastProgressAt = now
+                onReportProgress(msToTicks(player.currentPosition), false)
+            }
             delay(250)
         }
     }
@@ -261,3 +299,7 @@ private fun formatTime(ms: Long): String {
         append(seconds)
     }
 }
+
+private fun msToTicks(ms: Long): Long = ms * 10_000
+
+private const val PROGRESS_INTERVAL_MS = 10_000L

@@ -121,7 +121,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [x] 3.4.1 — Player screen with ExoPlayer: Use direct stream URL, configure ExoPlayer. *(MVP, L)*
 - [x] 3.4.2 — Playback controls: Custom controls (play/pause, seek). *(MVP, M)*
 - [x] 3.4.3 — Handle playback errors: Error UI on failure. *(MVP, S)*
-- [ ] 3.4.4 — Resume playback: Send progress updates, resume from last position. *(Recommended, M)*
+- [x] 3.4.4 — Resume playback: Send progress updates, resume from last position. *(Recommended, M)*
 
 ### Epic 3.5 — TV Series & Search (Phase 2)
 

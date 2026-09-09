@@ -11,8 +11,15 @@ import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
 import com.homeflix.app.data.dataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class AppContainer(context: Context) {
+
+    val applicationScope: CoroutineScope by lazy {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    }
 
     val settingsRepository: SettingsRepository by lazy {
         DataStoreSettingsRepository(context.dataStore)
