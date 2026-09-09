@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
@@ -24,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.homeflix.app.ui.SessionViewModel
+import com.homeflix.app.ui.screens.HomeScreen
 import com.homeflix.app.ui.screens.LoginScreen
 import com.homeflix.app.ui.screens.MovieDetailScreen
 import com.homeflix.app.ui.screens.MoviesScreen
@@ -40,7 +42,7 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
     LaunchedEffect(Unit) {
         sessionViewModel.logoutEvents.collect {
             navController.navigate(Routes.LOGIN) {
-                popUpTo(Routes.MOVIES) { inclusive = true }
+                popUpTo(Routes.HOME) { inclusive = true }
             }
         }
     }
@@ -68,10 +70,17 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                 composable(Routes.LOGIN) {
                     LoginScreen(
                         onLogin = {
-                            navController.navigate(Routes.MOVIES) {
+                            navController.navigate(Routes.HOME) {
                                 popUpTo(Routes.LOGIN) { inclusive = true }
                             }
                         }
+                    )
+                }
+
+                composable(Routes.HOME) {
+                    HomeScreen(
+                        onItemClick = { itemId -> navController.navigate(Routes.player(itemId)) },
+                        onLogout = sessionViewModel::logout
                     )
                 }
 
@@ -138,13 +147,25 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
             }
         }
 
-        if (currentRoute == Routes.MOVIES || currentRoute == Routes.TV_SERIES || currentRoute == Routes.SEARCH) {
+        if (currentRoute == Routes.HOME || currentRoute == Routes.MOVIES || currentRoute == Routes.TV_SERIES || currentRoute == Routes.SEARCH) {
             NavigationBar(windowInsets = WindowInsets(0.dp)) {
+                NavigationBarItem(
+                    selected = currentRoute == Routes.HOME,
+                    onClick = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.HOME) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
+                    label = { Text("Home") }
+                )
                 NavigationBarItem(
                     selected = currentRoute == Routes.MOVIES,
                     onClick = {
                         navController.navigate(Routes.MOVIES) {
-                            popUpTo(Routes.MOVIES) { saveState = true }
+                            popUpTo(Routes.HOME) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -156,7 +177,7 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                     selected = currentRoute == Routes.TV_SERIES,
                     onClick = {
                         navController.navigate(Routes.TV_SERIES) {
-                            popUpTo(Routes.MOVIES) { saveState = true }
+                            popUpTo(Routes.HOME) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -168,7 +189,7 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                     selected = currentRoute == Routes.SEARCH,
                     onClick = {
                         navController.navigate(Routes.SEARCH) {
-                            popUpTo(Routes.MOVIES) { saveState = true }
+                            popUpTo(Routes.HOME) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }

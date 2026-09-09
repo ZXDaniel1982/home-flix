@@ -20,6 +20,7 @@ import org.jellyfin.sdk.model.api.PlaybackOrder
 import org.jellyfin.sdk.model.api.RepeatMode
 import org.jellyfin.sdk.model.api.SortOrder
 import org.jellyfin.sdk.model.api.request.GetItemsRequest
+import org.jellyfin.sdk.model.api.request.GetResumeItemsRequest
 
 interface MovieRepository {
     suspend fun getMovies(startIndex: Int, limit: Int): List<BaseItemDto>
@@ -33,6 +34,8 @@ interface MovieRepository {
     suspend fun getEpisodes(seasonId: String): List<BaseItemDto>
 
     suspend fun search(query: String, limit: Int): List<BaseItemDto>
+
+    suspend fun getResumeItems(limit: Int): List<BaseItemDto>
 
     suspend fun getStream(itemId: String): PlaybackStream
 
@@ -175,6 +178,22 @@ class JellyfinMovieRepository(
                 recursive = true,
                 includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
                 sortBy = listOf(ItemSortBy.SORT_NAME),
+                limit = limit
+            )
+        )
+        return response.content.items.orEmpty()
+    }
+
+    override suspend fun getResumeItems(limit: Int): List<BaseItemDto> {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        val response = api.itemsApi.getResumeItems(
+            GetResumeItemsRequest(
+                userId = UUID.fromString(session.userId),
+                includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.EPISODE),
                 limit = limit
             )
         )
