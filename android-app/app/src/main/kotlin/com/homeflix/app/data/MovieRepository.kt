@@ -1,7 +1,7 @@
 package com.homeflix.app.data
 
 import java.util.UUID
-import android.net.Uri
+import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.flow.first
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.mediaInfoApi
@@ -60,7 +60,7 @@ fun buildImageUrl(
     imageType: ImageType
 ): String =
     "${baseUrl.trimEnd('/')}/Items/$itemId/Images/${imageType.serialName}" +
-        "?tag=${Uri.encode(imageTag)}&api_key=${Uri.encode(accessToken)}"
+        "?tag=${encode(imageTag)}&api_key=${encode(accessToken)}"
 
 fun buildStreamUrl(
     baseUrl: String,
@@ -69,7 +69,27 @@ fun buildStreamUrl(
     mediaSourceId: String
 ): String =
     "${baseUrl.trimEnd('/')}/Videos/$itemId/stream" +
-        "?static=true&MediaSourceId=${Uri.encode(mediaSourceId)}&api_key=${Uri.encode(accessToken)}"
+        "?static=true&MediaSourceId=${encode(mediaSourceId)}&api_key=${encode(accessToken)}"
+
+private fun encode(value: String): String {
+    val bytes = value.toByteArray(StandardCharsets.UTF_8)
+    return buildString(bytes.size) {
+        for (b in bytes) {
+            val c = b.toInt() and 0xFF
+            if ((c in 'a'.code..'z'.code) || (c in 'A'.code..'Z'.code) || (c in '0'.code..'9'.code) ||
+                c == '-'.code || c == '_'.code || c == '.'.code || c == '~'.code
+            ) {
+                append(c.toChar())
+            } else {
+                append('%')
+                append(HEX[c ushr 4])
+                append(HEX[c and 0x0F])
+            }
+        }
+    }
+}
+
+private const val HEX = "0123456789ABCDEF"
 
 class JellyfinMovieRepository(
     private val jellyfinProvider: JellyfinProvider,
