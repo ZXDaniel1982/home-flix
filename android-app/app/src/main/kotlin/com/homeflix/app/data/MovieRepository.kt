@@ -32,6 +32,8 @@ interface MovieRepository {
 
     suspend fun getEpisodes(seasonId: String): List<BaseItemDto>
 
+    suspend fun search(query: String, limit: Int): List<BaseItemDto>
+
     suspend fun getStream(itemId: String): PlaybackStream
 
     suspend fun imageCredentials(): ImageCredentials
@@ -155,6 +157,25 @@ class JellyfinMovieRepository(
                 includeItemTypes = listOf(BaseItemKind.EPISODE),
                 sortBy = listOf(ItemSortBy.INDEX_NUMBER),
                 limit = 500
+            )
+        )
+        return response.content.items.orEmpty()
+    }
+
+    override suspend fun search(query: String, limit: Int): List<BaseItemDto> {
+        val baseUrl = settingsRepository.serverUrl.first().orEmpty()
+        val session = sessionRepository.session.first()
+            ?: throw IllegalStateException("Not authenticated")
+
+        val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
+        val response = api.itemsApi.getItems(
+            GetItemsRequest(
+                userId = UUID.fromString(session.userId),
+                searchTerm = query,
+                recursive = true,
+                includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
+                sortBy = listOf(ItemSortBy.SORT_NAME),
+                limit = limit
             )
         )
         return response.content.items.orEmpty()

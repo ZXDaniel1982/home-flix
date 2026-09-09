@@ -8,6 +8,7 @@ object Routes {
     const val PLAYER = "player/{movieId}"
     const val TV_SERIES = "tv"
     const val SERIES_DETAIL = "series/{seriesId}"
+    const val SEARCH = "search"
 
     const val ARG_MOVIE_ID = "movieId"
     const val ARG_SERIES_ID = "seriesId"

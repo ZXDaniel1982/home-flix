@@ -126,7 +126,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 ### Epic 3.5 — TV Series & Search (Phase 2)
 
 - [x] 3.5.1 — TV series list and episode navigation: Similar to web but for Android. *(Recommended, L)*
-- [ ] 3.5.2 — Search functionality: Search screen with results. *(Recommended, M)*
+- [x] 3.5.2 — Search functionality: Search screen with results. *(Recommended, M)*
 - [ ] 3.5.3 — Continue watching row on home: Use Resume endpoint. *(Recommended, M)*
 
 ### Epic 3.6 — Offline Caching (Optional)

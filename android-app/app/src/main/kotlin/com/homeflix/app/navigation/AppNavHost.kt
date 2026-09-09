@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -27,6 +28,7 @@ import com.homeflix.app.ui.screens.LoginScreen
 import com.homeflix.app.ui.screens.MovieDetailScreen
 import com.homeflix.app.ui.screens.MoviesScreen
 import com.homeflix.app.ui.screens.PlayerScreen
+import com.homeflix.app.ui.screens.SearchScreen
 import com.homeflix.app.ui.screens.SeriesDetailScreen
 import com.homeflix.app.ui.screens.ServerUrlScreen
 import com.homeflix.app.ui.screens.TvSeriesScreen
@@ -87,6 +89,19 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                     )
                 }
 
+                composable(Routes.SEARCH) {
+                    SearchScreen(
+                        onItemClick = { item ->
+                            if (item.isSeries) {
+                                navController.navigate(Routes.seriesDetail(item.id))
+                            } else {
+                                navController.navigate(Routes.movieDetail(item.id))
+                            }
+                        },
+                        onLogout = sessionViewModel::logout
+                    )
+                }
+
                 composable(
                     route = Routes.MOVIE_DETAIL,
                     arguments = listOf(navArgument(Routes.ARG_MOVIE_ID) { type = NavType.StringType })
@@ -123,7 +138,7 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
             }
         }
 
-        if (currentRoute == Routes.MOVIES || currentRoute == Routes.TV_SERIES) {
+        if (currentRoute == Routes.MOVIES || currentRoute == Routes.TV_SERIES || currentRoute == Routes.SEARCH) {
             NavigationBar(windowInsets = WindowInsets(0.dp)) {
                 NavigationBarItem(
                     selected = currentRoute == Routes.MOVIES,
@@ -148,6 +163,18 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                     },
                     icon = { Icon(Icons.Filled.Tv, contentDescription = "TV Shows") },
                     label = { Text("TV Shows") }
+                )
+                NavigationBarItem(
+                    selected = currentRoute == Routes.SEARCH,
+                    onClick = {
+                        navController.navigate(Routes.SEARCH) {
+                            popUpTo(Routes.MOVIES) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
+                    label = { Text("Search") }
                 )
             }
         }
