@@ -27,16 +27,23 @@ import androidx.navigation.navArgument
 import com.homeflix.app.ui.SessionViewModel
 import com.homeflix.app.ui.screens.HomeScreen
 import com.homeflix.app.ui.screens.LoginScreen
+import com.homeflix.app.ui.screens.LoginViewModel
 import com.homeflix.app.ui.screens.MovieDetailScreen
 import com.homeflix.app.ui.screens.MoviesScreen
 import com.homeflix.app.ui.screens.PlayerScreen
 import com.homeflix.app.ui.screens.SearchScreen
 import com.homeflix.app.ui.screens.SeriesDetailScreen
 import com.homeflix.app.ui.screens.ServerUrlScreen
+import com.homeflix.app.ui.screens.ServerUrlViewModel
 import com.homeflix.app.ui.screens.TvSeriesScreen
 
 @Composable
-fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier) {
+fun AppNavHost(
+    sessionViewModel: SessionViewModel,
+    modifier: Modifier = Modifier,
+    serverUrlViewModel: ServerUrlViewModel? = null,
+    loginViewModel: LoginViewModel? = null
+) {
     val navController = rememberNavController()
 
     LaunchedEffect(Unit) {
@@ -58,23 +65,31 @@ fun AppNavHost(sessionViewModel: SessionViewModel, modifier: Modifier = Modifier
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable(Routes.SERVER) {
-                    ServerUrlScreen(
-                        onSaved = {
-                            navController.navigate(Routes.LOGIN) {
-                                popUpTo(Routes.SERVER) { inclusive = true }
-                            }
+                    val onSaved = {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.SERVER) { inclusive = true }
                         }
-                    )
+                    }
+                    val vm = serverUrlViewModel
+                    if (vm != null) {
+                        ServerUrlScreen(onSaved = onSaved, viewModel = vm)
+                    } else {
+                        ServerUrlScreen(onSaved = onSaved)
+                    }
                 }
 
                 composable(Routes.LOGIN) {
-                    LoginScreen(
-                        onLogin = {
-                            navController.navigate(Routes.HOME) {
-                                popUpTo(Routes.LOGIN) { inclusive = true }
-                            }
+                    val onLogin = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
                         }
-                    )
+                    }
+                    val vm = loginViewModel
+                    if (vm != null) {
+                        LoginScreen(onLogin = onLogin, viewModel = vm)
+                    } else {
+                        LoginScreen(onLogin = onLogin)
+                    }
                 }
 
                 composable(Routes.HOME) {

@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -42,13 +43,13 @@ fun ServerUrlScreen(
             placeholder = { Text("http://orangepi3b.local/api") },
             supportingText = { Text("Enter the server address; /api is added automatically if missing.") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp).testTag("serverUrl")
         )
 
         Button(
             onClick = viewModel::save,
             enabled = serverUrl.isNotBlank(),
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp).testTag("saveButton")
         ) {
             Text("Save & continue")
         }

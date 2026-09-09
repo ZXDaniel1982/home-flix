@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -48,7 +49,7 @@ fun LoginScreen(
             label = { Text("Username") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp).testTag("username")
         )
 
         OutlinedTextField(
@@ -61,7 +62,7 @@ fun LoginScreen(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("password")
         )
 
         if (error != null) {
@@ -76,7 +77,7 @@ fun LoginScreen(
         Button(
             onClick = viewModel::login,
             enabled = username.isNotBlank() && password.isNotBlank() && !isLoading,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp).testTag("loginButton")
         ) {
             Text(if (isLoading) "Signing in…" else "Sign in")
         }

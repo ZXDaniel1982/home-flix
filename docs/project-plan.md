@@ -158,7 +158,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 **Test environment:** Unit tests (4.3.1) run headless on the Arch laptop via `./gradlew test`. Instrumented/UI tests (4.3.2) require a device or emulator, so they run against the Windows emulator (MuMu Player) via `adb` — not on the headless build machine.
 
 - [x] 4.3.1 — Unit tests for ViewModels: Test API calls, state management. *(Recommended, M)*
-- [ ] 4.3.2 — UI tests with Compose test: Test navigation, login screen (run on Windows emulator via adb). *(Recommended, M)*
+- [x] 4.3.2 — UI tests with Compose test: Test navigation, login screen (run on Windows emulator via adb). *(Recommended, M)*
 - [ ] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume. *(MVP, M)*
 
 **Dependencies:** 4.1 after 1.3; 4.2 after 2.3; 4.3 after 3.3.
