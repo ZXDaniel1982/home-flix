@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -39,6 +40,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -112,6 +114,7 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
     var positionMs by remember(streamUrl) { mutableStateOf(0L) }
     var durationMs by remember(streamUrl) { mutableStateOf(0L) }
     var scrubPosition by remember(streamUrl) { mutableStateOf<Float?>(null) }
+    var playbackError by remember(streamUrl) { mutableStateOf(false) }
 
     val player = remember(streamUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -142,6 +145,10 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
                 durationMs = player.duration.takeIf { it > 0 } ?: 0L
                 isPlaying = player.isPlaying
             }
+
+            override fun onPlayerErrorChanged(error: PlaybackException?) {
+                playbackError = error != null
+            }
         }
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
         player.addListener(playerListener)
@@ -160,68 +167,78 @@ private fun VideoPlayer(streamUrl: String, modifier: Modifier = Modifier) {
     }
 
     Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    useController = false
-                    this.player = player
-                }
-            },
-            update = { it.player = player },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = {
-                        if (player.playbackState == Player.STATE_ENDED) {
-                            player.seekTo(0)
-                            player.playWhenReady = true
-                        } else {
-                            player.playWhenReady = !player.playWhenReady
-                        }
+        if (playbackError) {
+            Text(
+                text = "This video couldn't be played. It may be in an unsupported format (H.264/AAC MP4 is required).",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.align(Alignment.Center).padding(24.dp)
+            )
+        } else {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        useController = false
+                        this.player = player
                     }
-                ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = Color.White
+                },
+                update = { it.player = player },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .padding(horizontal = 8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = {
+                            if (player.playbackState == Player.STATE_ENDED) {
+                                player.seekTo(0)
+                                player.playWhenReady = true
+                            } else {
+                                player.playWhenReady = !player.playWhenReady
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            tint = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = formatTime(positionMs),
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    val max = durationMs.coerceAtLeast(1L).toFloat()
+                    Slider(
+                        value = scrubPosition ?: positionMs.coerceIn(0L, durationMs.coerceAtLeast(0L)).toFloat(),
+                        onValueChange = { scrubPosition = it },
+                        onValueChangeFinished = {
+                            scrubPosition?.let {
+                                player.seekTo(it.toLong())
+                                positionMs = it.toLong()
+                            }
+                            scrubPosition = null
+                        },
+                        valueRange = 0f..max,
+                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+                    )
+
+                    Text(
+                        text = formatTime(durationMs),
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
-
-                Text(
-                    text = formatTime(positionMs),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                val max = durationMs.coerceAtLeast(1L).toFloat()
-                Slider(
-                    value = scrubPosition ?: positionMs.coerceIn(0L, durationMs.coerceAtLeast(0L)).toFloat(),
-                    onValueChange = { scrubPosition = it },
-                    onValueChangeFinished = {
-                        scrubPosition?.let {
-                            player.seekTo(it.toLong())
-                            positionMs = it.toLong()
-                        }
-                        scrubPosition = null
-                    },
-                    valueRange = 0f..max,
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-                )
-
-                Text(
-                    text = formatTime(durationMs),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
         }
     }
