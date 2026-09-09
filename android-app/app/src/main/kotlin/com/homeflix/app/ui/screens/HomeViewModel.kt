@@ -40,10 +40,6 @@ class HomeViewModel(private val movieRepository: MovieRepository) : ViewModel() 
     private val _unauthorizedEvents = Channel<Unit>(Channel.BUFFERED)
     val unauthorizedEvents: Flow<Unit> = _unauthorizedEvents.receiveAsFlow()
 
-    init {
-        load()
-    }
-
     fun load() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
@@ -52,6 +48,7 @@ class HomeViewModel(private val movieRepository: MovieRepository) : ViewModel() 
                 val credentials = movieRepository.imageCredentials()
                 val items = resume.map { item ->
                     val tag = item.imageTags?.get(ImageType.PRIMARY)
+                        ?: item.imageTags?.get(ImageType.THUMB)
                     ResumeItem(
                         id = item.id.toString(),
                         name = item.name.orEmpty(),

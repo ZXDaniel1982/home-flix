@@ -46,6 +46,10 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
+        viewModel.load()
+    }
+
+    LaunchedEffect(Unit) {
         viewModel.unauthorizedEvents.collect { onLogout() }
     }
 
