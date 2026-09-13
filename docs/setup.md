@@ -92,18 +92,38 @@ docker compose -f docker/docker-compose.yml up -d
 - **caddy** — reverse proxy, publishes ports 80/443 (the only host ports).
 - **jellyfin** — media server, internal only (no host port).
 
-Environment variables (set in `docker/.env`):
+Environment variables (set in `docker/.env`; `.env.example` shows example values):
 
-| Variable | Purpose | Default |
-|----------|---------|---------|
+| Variable | Purpose | Compose fallback |
+|----------|---------|------------------|
 | `TZ` | Container timezone | `Pacific/Auckland` |
-| `SERVER_HOSTNAME` | Hostname Caddy serves (mDNS) | `orangepi3b.local` |
-| `SERVER_IP` | IP address Caddy serves | `192.168.68.58` |
+| `SERVER_HOSTNAME` | Hostname Caddy serves (mDNS) | empty (Caddy catch-all) |
+| `SERVER_IP` | IP address Caddy serves | empty (Caddy catch-all) |
 | `PUID` / `PGID` | Owner of the Jellyfin data dirs | `1000` / `1000` |
 
 The compose file also applies production defaults: container logs are rotated
-(10 MB × 3 files), Jellyfin runs as `PUID:PGID`, Caddy waits for Jellyfin to be
-healthy before starting, and both containers run with `no-new-privileges`.
+(10 MB × 3 files), Jellyfin runs as `PUID:PGID`, and both containers run with
+`no-new-privileges`.
+
+Caddy waits for Jellyfin to report healthy before starting
+(`depends_on: service_healthy`). If Jellyfin cannot become healthy, Caddy will
+not start, so the frontend is unavailable too. The Jellyfin image is
+`jellyfin/jellyfin:latest`; pin it to a known-good tag if you want to avoid a
+future `latest` update changing that health contract.
+
+> **Upgrading from an earlier compose file:** this file sets `name: home-flix`,
+> while older deployments were created under the auto-derived project name
+> `docker`. Because the container names are pinned, the first `up` after this
+> change conflicts with the existing containers. Migrate once with:
+>
+> ```bash
+> docker compose -p docker -f docker/docker-compose.yml down
+> docker compose -f docker/docker-compose.yml up -d
+> # optional, once the new stack is confirmed: docker volume rm docker_caddy_data docker_caddy_config
+> ```
+>
+> `down` preserves named volumes; `-p docker` targets the old project so the new
+> `home-flix_*` resources are created cleanly.
 
 ---
 

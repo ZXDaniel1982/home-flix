@@ -15,11 +15,11 @@ services:
       jellyfin:
         condition: service_healthy
     environment:
+      - TZ=${TZ:-Pacific/Auckland}
       - SERVER_HOSTNAME=${SERVER_HOSTNAME:-}
       - SERVER_IP=${SERVER_IP:-}
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - /mnt/ssd/web-frontend:/srv:ro
