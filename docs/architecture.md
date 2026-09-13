@@ -222,7 +222,7 @@ Playback: ExoPlayer plays the direct stream URL. The app sends playback progress
 
 ## 11. API Endpoints (Jellyfin)
 
-Clients use a subset of Jellyfin’s REST API. All requests include the access token in the `X-Emby-Authorization` header.
+Clients use a subset of Jellyfin’s REST API. All requests include the access token in the `X-Emby-Authorization` header. See [api.md](api.md) for the full client-facing reference (parameters, bodies, and which client uses each endpoint).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
