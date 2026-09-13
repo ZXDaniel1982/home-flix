@@ -3,6 +3,9 @@ services:
     image: caddy:2-alpine
     container_name: caddy
     restart: unless-stopped
+    environment:
+      - SERVER_HOSTNAME=${SERVER_HOSTNAME:-}
+      - SERVER_IP=${SERVER_IP:-}
     ports:
       - "80:80"
       - "443:443"

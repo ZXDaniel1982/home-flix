@@ -138,10 +138,10 @@ npm run build
 scp -r build/* dzhang@orangepi3b.local:/mnt/ssd/web-frontend/
 ```
 
-Then serve those files from Caddy. Update `docker/Caddyfile` on the board to:
+Then serve those files from Caddy. The repo's `docker/Caddyfile` already does this:
 
 ```caddy
-http://orangepi3b.local {
+http://{$SERVER_HOSTNAME}, http://{$SERVER_IP} {
 	handle /api/* {
 		reverse_proxy jellyfin:8096
 	}
@@ -152,6 +152,8 @@ http://orangepi3b.local {
 	}
 }
 ```
+
+`SERVER_HOSTNAME` / `SERVER_IP` are read from `docker/.env` (see `docker/.env.example`) and passed to the Caddy container by `docker-compose.yml`.
 
 Add the frontend mount to the Caddy service in `docker/docker-compose.yml`:
 
@@ -168,10 +170,6 @@ Reload:
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ```
-
-> Note: the frontend-serving `Caddyfile` change above is the piece not yet committed
-> to the repo (tracked in story 5.2). Until it is applied, the root path serves a
-> "coming soon" placeholder.
 
 ---
 

@@ -132,7 +132,7 @@ The HDD is the long‑term archive and is not read by Jellyfin. When a video is 
 ## 6. Network Architecture
 
 - All devices are on the same local network.
-- **Orange Pi 3B** has a static IP (e.g., 192.168.1.100) and mDNS hostname `orangepi3b.local`.
+- **Orange Pi 3B** has a static/reserved IP (e.g., `192.168.68.58`) and mDNS hostname `orangepi3b.local`; both are advertised to Caddy via `SERVER_IP` / `SERVER_HOSTNAME` in `docker/.env`.
 - **Arch laptop** uses `devserver.local` (mDNS) for development.
 - **Windows PC** may require manual hosts entries if mDNS is not supported.
 - Reverse proxy (Caddy) listens on ports 80/443 and routes:
@@ -222,7 +222,7 @@ Playback: ExoPlayer plays the direct stream URL. The app sends playback progress
 
 ## 11. API Endpoints (Jellyfin)
 
-Clients use a subset of Jellyfin’s REST API. All requests include the access token in the `X-Emby-Authorization` header. See [api.md](api.md) for the full client-facing reference (parameters, bodies, and which client uses each endpoint).
+Clients use a subset of Jellyfin’s REST API. The web app authenticates with the `X-Emby-Authorization` header; the Android app (via `jellyfin-sdk-kotlin`) uses the standard `Authorization` header — both with the `MediaBrowser` scheme. See [api.md](api.md) for the full client-facing reference (per-client routes, parameters, bodies, and which client uses each endpoint).
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -230,7 +230,6 @@ Clients use a subset of Jellyfin’s REST API. All requests include the access t
 | GET | `/Users/{userId}/Items` | List library items (filterable) |
 | GET | `/Users/{userId}/Items/{itemId}` | Get item details |
 | GET | `/Users/{userId}/Items/Resume` | Continue watching list |
-| GET | `/Users/{userId}/Items/Latest` | Recently added |
 | GET | `/Users/{userId}/Items?searchTerm={q}` | Search |
 | POST | `/Items/{itemId}/PlaybackInfo` | Get media sources and stream URLs |
 | GET | `/Videos/{itemId}/stream?static=true&...` | Direct stream URL |
