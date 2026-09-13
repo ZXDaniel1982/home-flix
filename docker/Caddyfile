@@ -1,4 +1,4 @@
-http://orangepi3b.local {
+http://orangepi3b.local, http://192.168.68.58 {
 	handle /api/* {
 		reverse_proxy jellyfin:8096
 	}
