@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { authenticate } from '$lib/api/auth';
 	import { ApiError } from '$lib/api/client';
 
@@ -14,7 +15,7 @@
 		loading = true;
 		try {
 			await authenticate(username, password);
-			await goto('/');
+			await goto(resolve('/'));
 		} catch (e) {
 			if (e instanceof ApiError && e.status === 401) {
 				error = 'Invalid username or password.';

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import MoviePoster from '$lib/components/MoviePoster.svelte';
 	import { getResume } from '$lib/api/items';
 	import type { BaseItemDto } from '$lib/api/types';
@@ -20,7 +21,7 @@
 			});
 	});
 
-	function playHref(item: BaseItemDto): string {
+	function playHref(item: BaseItemDto): `/movies/${string}/play` | `/tv/${string}/play/${string}` {
 		if (item.Type === 'Episode' && item.SeriesId) {
 			return `/tv/${item.SeriesId}/play/${item.Id}`;
 		}
@@ -42,8 +43,8 @@
 	<h2>Continue Watching</h2>
 	<div class="row">
 		{#each items as item (item.Id)}
-			<a class="card" href={playHref(item)}>
-				<MoviePoster item={item} />
+			<a class="card" href={resolve(playHref(item))}>
+				<MoviePoster {item} />
 				<div class="progress-track">
 					<div class="progress-fill" style={`width: ${progress(item)}%`}></div>
 				</div>

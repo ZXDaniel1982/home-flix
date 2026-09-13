@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { theme, toggleTheme } from '$lib/theme.svelte';
 	import { clearSession, getUser } from '$lib/api/session';
 
@@ -14,14 +15,14 @@
 
 	function handleLogout() {
 		clearSession();
-		goto('/login');
+		goto(resolve('/login'));
 	}
 
 	function handleSearch(event: SubmitEvent) {
 		event.preventDefault();
 		const q = query.trim();
 		if (q) {
-			goto(`/search?q=${encodeURIComponent(q)}`);
+			goto(resolve(`/search?q=${encodeURIComponent(q)}`));
 		}
 	}
 
@@ -67,7 +68,7 @@
 <svelte:window onkeydown={handleMenuKeydown} />
 
 <header class="navbar">
-	<a class="brand" href="/">Home Flix</a>
+	<a class="brand" href={resolve('/')}>Home Flix</a>
 	<button
 		class="menu-toggle"
 		type="button"
@@ -83,9 +84,9 @@
 		<span class="bar"></span>
 	</button>
 	<nav class="nav-links">
-		<a href="/">Home</a>
-		<a href="/movies">Movies</a>
-		<a href="/tv">TV</a>
+		<a href={resolve('/')}>Home</a>
+		<a href={resolve('/movies')}>Movies</a>
+		<a href={resolve('/tv')}>TV</a>
 	</nav>
 	<form class="search" onsubmit={handleSearch}>
 		<input type="search" bind:value={query} placeholder="Search" aria-label="Search" />
@@ -103,9 +104,9 @@
 
 {#if menuOpen}
 	<nav id="mobile-menu" class="mobile-menu" aria-label="Main navigation">
-		<a href="/" onclick={closeMenu}>Home</a>
-		<a href="/movies" onclick={closeMenu}>Movies</a>
-		<a href="/tv" onclick={closeMenu}>TV</a>
+		<a href={resolve('/')} onclick={closeMenu}>Home</a>
+		<a href={resolve('/movies')} onclick={closeMenu}>Movies</a>
+		<a href={resolve('/tv')} onclick={closeMenu}>TV</a>
 	</nav>
 {/if}
 

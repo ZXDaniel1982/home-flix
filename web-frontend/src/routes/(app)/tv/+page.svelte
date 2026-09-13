@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import MoviePoster from '$lib/components/MoviePoster.svelte';
 	import { getTvSeries } from '$lib/api/items';
 	import type { BaseItemDto } from '$lib/api/types';
@@ -67,7 +68,7 @@
 {:else}
 	<div class="grid">
 		{#each series as show (show.Id)}
-			<a class="card" href={`/tv/${show.Id}`}>
+			<a class="card" href={resolve(`/tv/${show.Id}`)}>
 				<MoviePoster item={show} />
 				<span class="title">{show.Name}</span>
 			</a>

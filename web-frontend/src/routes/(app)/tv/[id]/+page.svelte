@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { getItem, getSeasons, getEpisodes } from '$lib/api/items';
 	import { imageUrl } from '$lib/api/images';
@@ -82,12 +83,12 @@
 				<ul class="episodes">
 					{#each episodesBySeason[season.Id] ?? [] as episode (episode.Id)}
 						<li>
-							<a class="episode" href={`/tv/${seriesId}/play/${episode.Id}`}>
-							{#if season.IndexNumber != null && episode.IndexNumber != null}
-								<span class="ep-num">S{season.IndexNumber}E{episode.IndexNumber}</span>
-							{:else}
-								<span class="ep-num"></span>
-							{/if}
+							<a class="episode" href={resolve(`/tv/${seriesId}/play/${episode.Id}`)}>
+								{#if season.IndexNumber != null && episode.IndexNumber != null}
+									<span class="ep-num">S{season.IndexNumber}E{episode.IndexNumber}</span>
+								{:else}
+									<span class="ep-num"></span>
+								{/if}
 								<span class="ep-name">{episode.Name}</span>
 								{#if episode.RunTimeTicks}
 									<span class="ep-runtime">{formatRuntime(episode.RunTimeTicks)}</span>

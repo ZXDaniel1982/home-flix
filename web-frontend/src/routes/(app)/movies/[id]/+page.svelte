@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { getItem } from '$lib/api/items';
 	import { imageUrl } from '$lib/api/images';
@@ -60,7 +61,7 @@
 				<p class="overview">{item.Overview}</p>
 			{/if}
 
-			<a class="play" href={`/movies/${item.Id}/play`}>Play</a>
+			<a class="play" href={resolve(`/movies/${item.Id}/play`)}>Play</a>
 		</div>
 	</article>
 {/if}

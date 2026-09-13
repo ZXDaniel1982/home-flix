@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import {
 		getPlaybackInfo,
 		streamUrl,
@@ -9,7 +10,8 @@
 	import { getItem } from '$lib/api/items';
 	import type { MediaSourceInfo } from '$lib/api/types';
 
-	let { itemId, backHref }: { itemId: string; backHref?: string } = $props();
+	let { itemId, backHref }: { itemId: string; backHref?: `/movies/${string}` | `/tv/${string}` } =
+		$props();
 
 	const PROGRESS_INTERVAL_MS = 10_000;
 
@@ -115,12 +117,11 @@
 	<p class="error" role="alert">{error}</p>
 {:else if streamSrc}
 	{#if backHref}
-		<a class="back" href={backHref}>Back</a>
+		<a class="back" href={resolve(backHref)}>Back</a>
 	{/if}
 	{#if playbackError}
 		<p class="error" role="alert">
-			This video couldn't be played. It may be in an unsupported format (H.264/AAC MP4 is
-			required).
+			This video couldn't be played. It may be in an unsupported format (H.264/AAC MP4 is required).
 		</p>
 	{:else}
 		<div class="player">

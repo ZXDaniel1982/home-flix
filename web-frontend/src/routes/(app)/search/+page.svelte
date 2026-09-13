@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import MoviePoster from '$lib/components/MoviePoster.svelte';
 	import { search } from '$lib/api/items';
@@ -32,7 +33,7 @@
 			});
 	});
 
-	function href(item: BaseItemDto): string {
+	function href(item: BaseItemDto): `/movies/${string}` | `/tv/${string}` {
 		return item.Type === 'Series' ? `/tv/${item.Id}` : `/movies/${item.Id}`;
 	}
 </script>
@@ -51,7 +52,7 @@
 	<p class="count">{results.length} result(s) for "{q}"</p>
 	<div class="grid">
 		{#each results as item (item.Id)}
-			<a class="card" href={href(item)}>
+			<a class="card" href={resolve(href(item))}>
 				<MoviePoster {item} />
 				<span class="title">{item.Name}</span>
 			</a>
