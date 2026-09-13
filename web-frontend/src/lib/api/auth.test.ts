@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { authenticate } from './auth';
-import { getToken, getUser } from './session';
+import { getToken, getUser, setSession } from './session';
 
 function jsonResponse(body: unknown, status = 200): Response {
 	return new Response(JSON.stringify(body), { status });
@@ -34,5 +34,16 @@ describe('authenticate', () => {
 
 		await expect(authenticate('alice', 'wrong')).rejects.toThrow();
 		expect(getToken()).toBeNull();
+	});
+
+	it('keeps an existing session when a login attempt returns 401', async () => {
+		setSession('existing-token', { Id: 'u1', Name: 'Alice' });
+		vi.stubGlobal(
+			'fetch',
+			vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }))
+		);
+
+		await expect(authenticate('alice', 'wrong')).rejects.toThrow();
+		expect(getToken()).toBe('existing-token');
 	});
 });

@@ -77,6 +77,19 @@ if ! command -v rsync >/dev/null 2>&1; then
 	exit 1
 fi
 
+# rsync runs with --delete, so a wrong REMOTE_DIR would delete files it should
+# not. Refuse obviously unsafe targets and require an absolute path.
+if [[ "$REMOTE_DIR" != /* ]]; then
+	echo "ERROR: REMOTE_DIR must be an absolute path (got '$REMOTE_DIR')." >&2
+	exit 1
+fi
+case "$REMOTE_DIR" in
+"" | "/" | "/mnt" | "/mnt/ssd" | "/home" | "/root" | "/etc" | "/var" | "/usr")
+	echo "ERROR: refusing to rsync --delete into unsafe REMOTE_DIR '$REMOTE_DIR'." >&2
+	exit 1
+	;;
+esac
+
 [[ -f "$WEB_DIR/package.json" ]] || {
 	echo "ERROR: no package.json in $WEB_DIR (set WEB_DIR?)." >&2
 	exit 1
