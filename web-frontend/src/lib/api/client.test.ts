@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, apiFetch } from './client';
-import { setSession } from './session';
+import { getToken, getUser, setSession } from './session';
 
 function stubFetch(response: Response) {
 	const fn = vi.fn<typeof fetch>().mockResolvedValue(response);
@@ -49,6 +49,37 @@ describe('apiFetch', () => {
 		stubFetch(jsonResponse({}, 500));
 		const err500 = (await apiFetch('/x').catch((e) => e)) as ApiError;
 		expect(err500.status).toBe(500);
+	});
+
+	it('clears the session and redirects to login on a 401 response', async () => {
+		setSession('stale-token', { Id: 'u1', Name: 'Test' });
+		stubFetch(jsonResponse({}, 401));
+		const location = { href: '' };
+		vi.stubGlobal('window', { location });
+
+		const error = await apiFetch('/Users/u1/Items').catch((e) => e);
+
+		expect(error).toBeInstanceOf(ApiError);
+		expect((error as ApiError).status).toBe(401);
+		expect(getToken()).toBeNull();
+		expect(getUser()).toBeNull();
+		expect(location.href).toBe('/login');
+	});
+
+	it('does not clear the session on 401 when unauthorized handling is disabled', async () => {
+		setSession('token', { Id: 'u1', Name: 'Test' });
+		stubFetch(jsonResponse({}, 401));
+		const location = { href: '' };
+		vi.stubGlobal('window', { location });
+
+		await apiFetch(
+			'/Users/AuthenticateByName',
+			{ method: 'POST' },
+			{ handleUnauthorized: false }
+		).catch(() => {});
+
+		expect(getToken()).toBe('token');
+		expect(location.href).toBe('');
 	});
 
 	it('sends a MediaBrowser authorization header without a token when unauthenticated', async () => {

@@ -60,6 +60,22 @@ async function mockJellyfin(page: Page): Promise<void> {
 	);
 }
 
+test('redirects to login when the stored session is invalid', async ({ page }) => {
+	await page.route(
+		(url) => url.pathname.startsWith('/api/'),
+		(route) => route.fulfill({ status: 401, json: {} })
+	);
+	await page.addInitScript(() => {
+		localStorage.setItem('home-flix-token', 'stale-token');
+		localStorage.setItem('home-flix-user', JSON.stringify({ Id: 'user-1', Name: 'Alice' }));
+	});
+
+	await page.goto('/movies');
+
+	await expect(page).toHaveURL(/\/login$/);
+	await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+});
+
 test('login, browse a movie, and start playback', async ({ page }) => {
 	await mockJellyfin(page);
 

@@ -1,6 +1,10 @@
-import { getDeviceId, getToken } from './session';
+import { clearSession, getDeviceId, getToken } from './session';
 
 export const API_BASE = '/api';
+
+export interface ApiFetchOptions {
+	handleUnauthorized?: boolean;
+}
 
 const CLIENT_NAME = 'Home Flix';
 const DEVICE_NAME = 'Web Browser';
@@ -30,7 +34,17 @@ function buildAuthHeader(): string {
 	return `MediaBrowser ${parts.join(', ')}`;
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+function redirectToLogin(): void {
+	if (typeof window !== 'undefined') {
+		window.location.href = '/login';
+	}
+}
+
+export async function apiFetch<T>(
+	path: string,
+	init: RequestInit = {},
+	options: ApiFetchOptions = {}
+): Promise<T> {
 	const headers = new Headers(init.headers);
 	headers.set('X-Emby-Authorization', buildAuthHeader());
 	if (init.body && !headers.has('Content-Type')) {
@@ -40,6 +54,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 	const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
 
 	if (!res.ok) {
+		if (res.status === 401 && options.handleUnauthorized !== false) {
+			clearSession();
+			redirectToLogin();
+		}
 		throw new ApiError(res.status, `Jellyfin request failed: ${res.status} ${res.statusText}`);
 	}
 

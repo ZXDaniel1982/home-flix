@@ -7,10 +7,14 @@ export async function authenticate(
 	password: string
 ): Promise<AuthenticationResult> {
 	const body: AuthenticateByNameRequest = { Username: username, Pw: password };
-	const result = await apiFetch<AuthenticationResult>('/Users/AuthenticateByName', {
-		method: 'POST',
-		body: JSON.stringify(body)
-	});
+	const result = await apiFetch<AuthenticationResult>(
+		'/Users/AuthenticateByName',
+		{
+			method: 'POST',
+			body: JSON.stringify(body)
+		},
+		{ handleUnauthorized: false }
+	);
 	setSession(result.AccessToken, result.User);
 	return result;
 }
