@@ -254,11 +254,31 @@ JELLYFIN_API_KEY=<key> scripts/test-direct-stream.sh
 
 ## Recovery / Backup
 
-Back up the Jellyfin config (database, metadata, users) periodically:
+Back up the Jellyfin config from the development machine; the script pulls it off
+the Pi:
 
 ```bash
-tar -czf jellyfin-config-$(date +%F).tar.gz /mnt/ssd/jellyfin/config
+scripts/backup-jellyfin.sh
 ```
 
-Recovery: reinstall the OS, install Docker, restore this repo and the config tarball,
-remount the drives, and `docker compose up -d`.
+It snapshots the live SQLite database (safe while Jellyfin runs), tars the
+essentials (database, `config/`, `plugins/`, `root/`), pulls the tarball into
+`~/backups` on the dev machine, and keeps the 7 most recent. `metadata/` and
+`log/` are excluded (artwork is re-fetched automatically). Override the defaults
+with `BACKUP_DIR` and `KEEP`.
+
+Recovery: reinstall the OS, install Docker, restore this repo, remount the
+drives, then restore the config before starting the stack:
+
+```bash
+# on the dev machine: copy the newest backup to the board
+scp ~/backups/jellyfin-config-<timestamp>.tar.gz dzhang@orangepi3b.local:/tmp/
+
+# on the board: stop the stack, clear stale SQLite WAL/SHM, extract
+cd ~/home-flix
+docker compose -f docker/docker-compose.yml down
+mkdir -p /mnt/ssd/jellyfin/config
+rm -f /mnt/ssd/jellyfin/config/data/jellyfin.db-wal /mnt/ssd/jellyfin/config/data/jellyfin.db-shm
+tar -xzf /tmp/jellyfin-config-<timestamp>.tar.gz -C /mnt/ssd/jellyfin/config
+docker compose -f docker/docker-compose.yml up -d
+```

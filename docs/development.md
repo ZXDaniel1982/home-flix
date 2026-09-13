@@ -289,11 +289,13 @@ docker compose up -d
 | View logs | `docker compose logs -f` |
 | Rebuild | `docker compose up -d --build` |
 
-### Backup Jellyfin Config (on Orange Pi)
+### Backup Jellyfin Config
+
+Run on the development machine; it snapshots the database and pulls the backup
+off the Orange Pi into `~/backups`:
 
 ```bash
-tar -czf jellyfin-config-$(date +%F).tar.gz /mnt/ssd/jellyfin/config
-scp jellyfin-config-*.tar.gz user@devserver.local:~/backups/
+scripts/backup-jellyfin.sh
 ```
 
 ---
