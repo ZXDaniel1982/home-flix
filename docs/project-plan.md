@@ -184,7 +184,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 ### Epic 5.3 — Backup & Recovery
 
 - [x] 5.3.1 — Backup Jellyfin config: Script to tar config and copy offsite. *(Recommended, M)*
-- [ ] 5.3.2 — Media backup strategy: Document rsync or cron job. *(Optional, M)*
+- [x] 5.3.2 — Media backup strategy: Document rsync or cron job. *(Optional, M)*
 
 **Dependencies:** 5.1 after stable; 5.2 after MVP; 5.3 after setup.
 

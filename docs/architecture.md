@@ -117,17 +117,21 @@ The system is designed for personal use within a home network and does **not** r
 │   └── cache/            # Image cache, temporary files (no transcoding)
 └── web-frontend/         # Built static files for web app (optional, if not using Docker)
 
-/mnt/hdd/
-└── archive/              # Master copy of all media (not served directly by Jellyfin)
-    ├── movies/
-    └── tvshows/
+/mnt/hdd/                  # Archive drive (also holds non-media personal data)
+└── Entertainment/
+    └── video/             # Master copy of movies/TV (not served directly by Jellyfin)
+        ├── Movie/
+        └── Catoon/
 ```
+
+Other HDD folders (`Study/`, photos, laptop backups, …) are personal data, not
+media served by Jellyfin.
 
 Note: Media files must be in a client‑friendly format (H.264/AAC in MP4 recommended) to avoid transcoding.
 
 ### 5.3 Media Flow (HDD archive → SSD streaming)
 
-The HDD is the long‑term archive and is not read by Jellyfin. When a video is to be streamed, it is copied from the HDD to the SSD; Jellyfin serves only the files staged on the SSD. This isolates the archive from streaming reads and serves media from fast SSD storage.
+The HDD (`/mnt/hdd/Entertainment/video/`) is the long‑term archive and is not read by Jellyfin. When a video is to be streamed, it is copied from the HDD to the SSD; Jellyfin serves only the files staged on the SSD. This isolates the archive from streaming reads and serves media from fast SSD storage.
 
 ## 6. Network Architecture
 
@@ -258,8 +262,8 @@ Clients use a subset of Jellyfin’s REST API. The web app authenticates with th
 
 | What | Method | Frequency |
 |------|--------|-----------|
-| Jellyfin config/database | `tar` or `rsync` to another machine | Weekly |
-| Media archive (HDD) | Master copy; SSD staging is replaceable | Manual if desired |
+| Jellyfin config/database | `scripts/backup-jellyfin.sh` — online SQLite snapshot, pulled to the dev machine | Weekly |
+| Media (`/mnt/ssd/media` + `/mnt/hdd`) | `scripts/backup-media.sh` — `rsync` to a local mount or SSH target | Optional; not yet scheduled |
 | Source code | Git repository (GitHub) | Every commit |
 | Docker compose files | Git repository | Every commit |
 

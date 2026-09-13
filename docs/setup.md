@@ -282,3 +282,64 @@ rm -f /mnt/ssd/jellyfin/config/data/jellyfin.db-wal /mnt/ssd/jellyfin/config/dat
 tar -xzf /tmp/jellyfin-config-<timestamp>.tar.gz -C /mnt/ssd/jellyfin/config
 docker compose -f docker/docker-compose.yml up -d
 ```
+
+---
+
+## Media Backup Strategy
+
+Media is far larger than the Jellyfin config, so it is backed up separately with
+`rsync`. `scripts/backup-media.sh` runs **on the Orange Pi** and copies the served
+media and the HDD to a target you provide.
+
+The script must exist on the board. From the development machine:
+
+```bash
+ssh dzhang@orangepi3b.local 'mkdir -p ~/home-flix/scripts'
+scp scripts/backup-media.sh dzhang@orangepi3b.local:~/home-flix/scripts/
+```
+
+Then, on the board:
+
+```bash
+# preview first (no writes)
+DRY_RUN=1 DEST=user@nas.local:/volume1/backups/ scripts/backup-media.sh
+
+# then run for real
+DEST=user@nas.local:/volume1/backups/ scripts/backup-media.sh
+```
+
+`DEST` is required and may be a local mount (e.g. `/mnt/backup/`, which must
+already exist) or an SSH target with an explicit path (`user@nas.local:/path`).
+It should be a **separate physical device or host** — a directory on the same Pi
+is not a real backup. Prefer a POSIX filesystem; on exFAT/NTFS/SMB pass
+`RSYNC_EXTRA='--no-owner --no-group --no-perms'`. The script writes:
+
+| Source | Destination |
+|--------|-------------|
+| `/mnt/ssd/media/` (served media) | `$DEST/ssd-media/` |
+| `/mnt/hdd/` (HDD archive) | `$DEST/hdd/` |
+
+Windows/OS junk (`$RECYCLE.BIN`, `System Volume Information`, `*.tmp`, `.Trash-*`,
+`.DS_Store`) is skipped, and an interrupted transfer resumes with `--partial`.
+
+**`--delete` is off by default.** Files removed from the source stay in the
+target, so a lost or unmounted source cannot erase the backup. Set `DELETE=1`
+once you trust the source and want an exact mirror; even then the script refuses
+to run unless each source is on a separate mounted filesystem and is non-empty,
+so an unmounted disk cannot wipe the backup.
+
+### Scheduling with cron
+
+Run the backup nightly from the Pi's crontab (`crontab -e`):
+
+```cron
+30 3 * * * DEST=user@nas.local:/volume1/backups/ /home/dzhang/home-flix/scripts/backup-media.sh >> /home/dzhang/backup-media.log 2>&1
+```
+
+Cron has a minimal environment. If the target is remote, the Pi's SSH key must be
+authorised on the target and the target's host key must already be in
+`known_hosts`, or the first unattended run fails host-key verification. For a
+non-standard SSH port set `RSYNC_RSH='ssh -p 2222'`. Keep the log off the small
+`/var/log` tmpfs (the example writes to `~/backup-media.log`), and rotate it —
+the log grows without bound otherwise, e.g. with a weekly `logrotate` rule or a
+`truncate -s 0` in a separate cron entry.

@@ -73,7 +73,7 @@ Files must be **H.264 / AAC / MP4** for direct play. Convert other formats befor
 
 ### Where files live
 
-- **HDD archive** (`/mnt/hdd/archive/`) — the master copy of everything, not read by Jellyfin.
+- **HDD archive** (`/mnt/hdd/Entertainment/video/`) — the master copy of movies/TV, not read by Jellyfin. (The drive also holds non-media personal data such as `Study/`, photos, and backups.)
 - **SSD** (`/mnt/ssd/media/`) — the files Jellyfin actually serves. Media is copied here from the archive when you want to watch it.
 
 ### Naming and layout
@@ -96,7 +96,8 @@ Jellyfin matches metadata from the folder/file names, so follow these convention
 1. Copy the file from the archive to the matching SSD folder, e.g.:
 
    ```bash
-   cp -r "/mnt/hdd/archive/movies/MovieName (Year)" /mnt/ssd/media/movies/
+   # adjust the source path to where the title lives on the HDD
+   cp -r "/mnt/hdd/Entertainment/video/Movie/MovieName (Year)" /mnt/ssd/media/movies/
    ```
 
 2. In Jellyfin (**Dashboard → Libraries → Scan All Libraries**), or wait for the next scheduled scan, so the new file appears in the clients.
