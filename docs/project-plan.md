@@ -177,7 +177,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 ### Epic 5.2 — Deployment Automation
 
-- [ ] 5.2.1 — Web frontend deployment script: Build and copy to Orange Pi (or push Docker image). *(Recommended, M)*
+- [x] 5.2.1 — Web frontend deployment script: Build and copy to Orange Pi (or push Docker image). *(Recommended, M)*
 - [ ] 5.2.2 — Docker Compose production setup: Finalize compose with all services, env vars. *(Recommended, M)*
 - [ ] 5.2.3 — CI/CD pipeline: GitHub Actions to build and deploy automatically. *(Optional, L)*
 

@@ -270,7 +270,7 @@ docker compose up -d
 | Install deps | `cd web-frontend && npm install` |
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
-| Deploy to Orange Pi | `scp -r build/* dzhang@orangepi3b.local:/mnt/ssd/web-frontend/` |
+| Deploy to Orange Pi | `scripts/deploy-web.sh` (from repo root) |
 
 ### Android
 

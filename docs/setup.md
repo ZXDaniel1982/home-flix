@@ -128,15 +128,28 @@ Jellyfin then generates `/api`-prefixed URLs, and its admin UI is reachable at
 
 ## 8. Deploy the Web Frontend
 
-On the development machine, build the SvelteKit app and copy the static output to the
-board:
+On the development machine, run the deploy script. It builds the SvelteKit app and
+rsyncs the static output to the board:
 
 ```bash
-cd web-frontend
-npm install
-npm run build
-scp -r build/* dzhang@orangepi3b.local:/mnt/ssd/web-frontend/
+scripts/deploy-web.sh
 ```
+
+Prerequisites: `rsync` and SSH access to the board. Install rsync on both machines:
+
+```bash
+sudo pacman -S rsync                      # Arch laptop
+ssh dzhang@orangepi3b.local 'sudo apt install -y rsync'   # Orange Pi
+```
+
+Override the defaults with environment variables:
+
+```bash
+SERVER=orangepi3b.local SSH_USER=dzhang REMOTE_DIR=/mnt/ssd/web-frontend scripts/deploy-web.sh
+```
+
+`rsync --delete` removes files on the board that are no longer in the build, so the
+served directory stays in sync with the current source. No Caddy restart is needed.
 
 Then serve those files from Caddy. The repo's `docker/Caddyfile` already does this:
 
