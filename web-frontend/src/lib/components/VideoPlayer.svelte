@@ -37,6 +37,7 @@
 	let mediaSourceId = '';
 	let resumeTicks = 0;
 	let lastReportAt = 0;
+	let stoppedReported = false;
 	let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 	$effect(() => {
@@ -47,6 +48,7 @@
 		mediaSourceId = '';
 		resumeTicks = 0;
 		lastReportAt = 0;
+		stoppedReported = false;
 		nextEpisode = null;
 		seriesId = '';
 		cancelCountdown();
@@ -100,6 +102,7 @@
 	}
 
 	function onPlay() {
+		stoppedReported = false;
 		reportPlaybackStarted(itemId, mediaSourceId, currentTicks()).catch(() => {});
 	}
 
@@ -115,6 +118,7 @@
 	}
 
 	function onEnded() {
+		reportStopped();
 		if (!nextEpisode) return;
 		startCountdown();
 	}
@@ -147,6 +151,7 @@
 		if (!nextEpisode) return;
 		clearCountdown();
 		showCountdown = false;
+		reportStopped();
 		goto(resolve(`/tv/${seriesId}/play/${nextEpisode.Id}?autoplay=1`));
 	}
 
@@ -157,15 +162,19 @@
 		);
 	}
 
+	function reportStopped() {
+		if (stoppedReported || !mediaSourceId) return;
+		stoppedReported = true;
+		const ticks = Math.floor((video?.currentTime ?? 0) * 10_000_000);
+		reportPlaybackStopped(itemId, mediaSourceId, ticks).catch(() => {});
+	}
+
 	$effect(() => {
 		const el = video;
 		if (!el) return;
 		return () => {
 			clearCountdown();
-			const ticks = Math.floor(el.currentTime * 10_000_000);
-			if (mediaSourceId) {
-				reportPlaybackStopped(itemId, mediaSourceId, ticks).catch(() => {});
-			}
+			reportStopped();
 		};
 	});
 </script>

@@ -163,4 +163,15 @@ describe('getNextEpisode', () => {
 		).toBeNull();
 		expect(fn).not.toHaveBeenCalled();
 	});
+
+	it('returns null when the episode has no series id', async () => {
+		setSession('tok', { Id: 'u1', Name: 'Alice' });
+		const fn = vi.fn<typeof fetch>();
+		vi.stubGlobal('fetch', fn);
+
+		expect(
+			await getNextEpisode({ Id: 'e1', Name: 'One', Type: 'Episode', SeasonId: 's1' })
+		).toBeNull();
+		expect(fn).not.toHaveBeenCalled();
+	});
 });
