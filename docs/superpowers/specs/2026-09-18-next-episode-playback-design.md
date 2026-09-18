@@ -165,7 +165,7 @@ suspend fun getNextEpisode(itemId: String): BaseItemDto?
   - movie → `nextEpisode == null`;
   - last episode → `nextEpisode == null`;
   - next-episode lookup throws → load still succeeds with `nextEpisode == null`.
-- Update `FakeMovieRepository` in `app/src/test/.../TestDoubles.kt` and the separate fake in `app/src/androidTest/.../TestDoubles.kt` for the new interface method.
+- Update `FakeMovieRepository` in `app/src/test/kotlin/com/homeflix/app/TestDoubles.kt` for the new interface method. (The `androidTest` source set has no `MovieRepository` fake, so no change is needed there.)
 
 ### Commands
 
