@@ -59,6 +59,29 @@ export async function getEpisodes(seasonId: string): Promise<BaseItemDto[]> {
 	return result.Items ?? [];
 }
 
+export async function getNextEpisode(episode: BaseItemDto): Promise<BaseItemDto | null> {
+	if (episode.Type !== 'Episode' || !episode.SeriesId || !episode.SeasonId) {
+		return null;
+	}
+	const seasons = await getSeasons(episode.SeriesId);
+	const episodes = await getEpisodes(episode.SeasonId);
+	const index = episodes.findIndex((candidate) => candidate.Id === episode.Id);
+	if (index === -1) {
+		return null;
+	}
+	const nextInSeason = episodes[index + 1];
+	if (nextInSeason) {
+		return nextInSeason;
+	}
+	const seasonIndex = seasons.findIndex((season) => season.Id === episode.SeasonId);
+	const nextSeason = seasonIndex === -1 ? undefined : seasons[seasonIndex + 1];
+	if (!nextSeason) {
+		return null;
+	}
+	const nextSeasonEpisodes = await getEpisodes(nextSeason.Id);
+	return nextSeasonEpisodes[0] ?? null;
+}
+
 export async function search(query: string, limit = 50): Promise<BaseItemDto[]> {
 	const user = getUser();
 	if (!user) {
