@@ -33,6 +33,8 @@ interface MovieRepository {
 
     suspend fun getEpisodes(seasonId: String): List<BaseItemDto>
 
+    suspend fun getNextEpisode(itemId: String): BaseItemDto?
+
     suspend fun search(query: String, limit: Int): List<BaseItemDto>
 
     suspend fun getResumeItems(limit: Int): List<BaseItemDto>
@@ -183,6 +185,18 @@ class JellyfinMovieRepository(
             )
         )
         return response.content.items.orEmpty()
+    }
+
+    override suspend fun getNextEpisode(itemId: String): BaseItemDto? {
+        val item = getMovie(itemId)
+        if (item.type != BaseItemKind.EPISODE) return null
+        val seriesId = item.seriesId?.toString() ?: return null
+        val seasonId = item.seasonId?.toString() ?: return null
+        val seasons = getSeasons(seriesId)
+        val currentSeasonEpisodes = getEpisodes(seasonId)
+        return resolveNextEpisode(currentSeasonEpisodes, itemId) {
+            nextSeason(seasons, seasonId)?.let { getEpisodes(it.id.toString()).firstOrNull() }
+        }
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {

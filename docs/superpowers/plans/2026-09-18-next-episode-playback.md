@@ -54,7 +54,7 @@
 - Consumes: existing `getSeasons(seriesId): Promise<BaseItemDto[]>` and `getEpisodes(seasonId): Promise<BaseItemDto[]>` in `items.ts`.
 - Produces: `getNextEpisode(episode: BaseItemDto): Promise<BaseItemDto | null>`; `BaseItemDto.SeasonId?: string`.
 
-- [ ] **Step 1: Add the failing tests**
+- [x] **Step 1: Add the failing tests**
 
 Append a new `describe` block to `web-frontend/src/lib/api/items.test.ts`. First extend the imports and add an `episode` fixture helper near the top (after `jsonResponse`):
 
@@ -175,12 +175,12 @@ describe('getNextEpisode', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: FAIL — `getNextEpisode` is not exported / not a function, and the `SeasonId` property is a type error.
 
-- [ ] **Step 3: Add `SeasonId` to the type**
+- [x] **Step 3: Add `SeasonId` to the type**
 
 In `web-frontend/src/lib/api/types.ts`, add the field to `BaseItemDto` after `SeriesId`:
 
@@ -189,7 +189,7 @@ In `web-frontend/src/lib/api/types.ts`, add the field to `BaseItemDto` after `Se
 	SeasonId?: string;
 ```
 
-- [ ] **Step 4: Implement `getNextEpisode`**
+- [x] **Step 4: Implement `getNextEpisode`**
 
 In `web-frontend/src/lib/api/items.ts`, add after `getEpisodes`:
 
@@ -218,17 +218,17 @@ export async function getNextEpisode(episode: BaseItemDto): Promise<BaseItemDto 
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: PASS (all `getNextEpisode` cases).
 
-- [ ] **Step 6: Run type check and lint**
+- [x] **Step 6: Run type check and lint**
 
 Run (from `web-frontend/`): `npm run check && npm run lint`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add web-frontend/src/lib/api/types.ts web-frontend/src/lib/api/items.ts web-frontend/src/lib/api/items.test.ts
@@ -247,7 +247,7 @@ git commit -m "feat(web): resolve next episode in series order"
 - Consumes: `getNextEpisode()` from Task 1; `resolve` from `$app/paths`; `goto` from `$app/navigation`.
 - Produces: `VideoPlayer` accepts a new optional `autoplay?: boolean` prop (default `false`).
 
-- [ ] **Step 1: Replace the `VideoPlayer.svelte` script block**
+- [x] **Step 1: Replace the `VideoPlayer.svelte` script block**
 
 Replace the entire `<script lang="ts"> … </script>` block in `web-frontend/src/lib/components/VideoPlayer.svelte` with:
 
@@ -425,7 +425,7 @@ Replace the entire `<script lang="ts"> … </script>` block in `web-frontend/src
 </script>
 ```
 
-- [ ] **Step 2: Update the `VideoPlayer.svelte` markup**
+- [x] **Step 2: Update the `VideoPlayer.svelte` markup**
 
 In the same file, inside the `{:else}` branch that contains `<div class="player">`, add the `autoplay` attribute, the `onended` handler, and the two overlays. The block becomes:
 
@@ -459,7 +459,7 @@ In the same file, inside the `{:else}` branch that contains `<div class="player"
 		</div>
 ```
 
-- [ ] **Step 3: Update the `VideoPlayer.svelte` styles**
+- [x] **Step 3: Update the `VideoPlayer.svelte` styles**
 
 Replace the `.player` rule and add the new rules in the `<style>` block:
 
@@ -508,7 +508,7 @@ Replace the `.player` rule and add the new rules in the `<style>` block:
 	}
 ```
 
-- [ ] **Step 4: Pass autoplay from the episode route**
+- [x] **Step 4: Pass autoplay from the episode route**
 
 Replace the contents of `web-frontend/src/routes/(app)/tv/[seriesId]/play/[episodeId]/+page.svelte` with:
 
@@ -527,7 +527,7 @@ Replace the contents of `web-frontend/src/routes/(app)/tv/[seriesId]/play/[episo
 
 Leave the movie play route (`web-frontend/src/routes/(app)/movies/[id]/play/+page.svelte`) unchanged; it relies on the default `autoplay = false`.
 
-- [ ] **Step 5: Type check, lint, and build**
+- [x] **Step 5: Type check, lint, and build**
 
 Run (from `web-frontend/`): `npm run check && npm run lint && npm run build`
 Expected: all pass.
@@ -543,7 +543,7 @@ Run (from `web-frontend/`): `npm run dev`, then in a browser:
 
 If autoplay is blocked by the browser after advancing, confirm the next episode is loaded, paused, with the Next Episode button still visible.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add web-frontend/src/lib/components/VideoPlayer.svelte "web-frontend/src/routes/(app)/tv/[seriesId]/play/[episodeId]/+page.svelte"
@@ -568,7 +568,7 @@ git commit -m "feat(web): auto-play next episode with countdown and next button"
   - `MovieRepository.getNextEpisode(itemId: String): BaseItemDto?`
   - `FakeMovieRepository.nextEpisode: BaseItemDto?` and `FakeMovieRepository.nextEpisodeError: Exception?`
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 Create `android-app/app/src/test/kotlin/com/homeflix/app/NextEpisodeTest.kt`:
 
@@ -634,12 +634,12 @@ class NextEpisodeTest {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest --tests "com.homeflix.app.NextEpisodeTest"`
 Expected: FAIL to compile — `nextEpisodeInSeason` and `nextSeason` are unresolved.
 
-- [ ] **Step 3: Create the resolution helpers**
+- [x] **Step 3: Create the resolution helpers**
 
 Create `android-app/app/src/main/kotlin/com/homeflix/app/data/NextEpisode.kt`:
 
@@ -669,12 +669,12 @@ internal fun nextSeason(seasons: List<BaseItemDto>, currentSeasonId: String): Ba
 }
 ```
 
-- [ ] **Step 4: Run helper tests to verify they pass**
+- [x] **Step 4: Run helper tests to verify they pass**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest --tests "com.homeflix.app.NextEpisodeTest"`
 Expected: PASS.
 
-- [ ] **Step 5: Add `getNextEpisode` to the repository interface**
+- [x] **Step 5: Add `getNextEpisode` to the repository interface**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt`, add to the `MovieRepository` interface after `getEpisodes`:
 
@@ -682,7 +682,7 @@ In `android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt`, a
     suspend fun getNextEpisode(itemId: String): BaseItemDto?
 ```
 
-- [ ] **Step 6: Implement it in `JellyfinMovieRepository`**
+- [x] **Step 6: Implement it in `JellyfinMovieRepository`**
 
 In the same file, add after the `getEpisodes` override:
 
@@ -702,7 +702,7 @@ In the same file, add after the `getEpisodes` override:
 
 `BaseItemKind` is already imported in this file.
 
-- [ ] **Step 7: Update `FakeMovieRepository`**
+- [x] **Step 7: Update `FakeMovieRepository`**
 
 In `android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt`, add fields next to the other `var`s in `FakeMovieRepository`:
 
@@ -721,12 +721,12 @@ and add the override after `getEpisodes`:
     }
 ```
 
-- [ ] **Step 8: Compile and run the unit test suite**
+- [x] **Step 8: Compile and run the unit test suite**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all existing tests plus `NextEpisodeTest` pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/data/NextEpisode.kt android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt android-app/app/src/test/kotlin/com/homeflix/app/NextEpisodeTest.kt
@@ -745,7 +745,7 @@ git commit -m "feat(android): resolve next episode in series order"
 - Consumes: `MovieRepository.getNextEpisode()` and `FakeMovieRepository.nextEpisode` / `nextEpisodeError` from Task 3.
 - Produces: `PlayerViewModel.NextEpisode(id: String, title: String)`; `PlayerViewModel.UiState.Success(stream, resumeTicks, nextEpisode: NextEpisode?)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append these tests to `android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt` (add `import org.junit.Assert.assertNull` and `import org.jellyfin.sdk.model.api.BaseItemKind`):
 
@@ -799,12 +799,12 @@ Append these tests to `android-app/app/src/test/kotlin/com/homeflix/app/PlayerVi
     }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest --tests "com.homeflix.app.PlayerViewModelTest"`
 Expected: FAIL to compile — `Success` has no `nextEpisode` and `NextEpisode` type does not exist.
 
-- [ ] **Step 3: Update `PlayerViewModel`**
+- [x] **Step 3: Update `PlayerViewModel`**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt`:
 
@@ -855,12 +855,12 @@ In `load()`, replace the block that builds `_uiState.value` with:
                 )
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt
@@ -879,7 +879,7 @@ git commit -m "feat(android): expose next episode on player state"
 - Consumes: `PlayerViewModel.NextEpisode` and `UiState.Success.nextEpisode` from Task 4; `Routes.player(id)`.
 - Produces: `PlayerScreen(onBack, onPlayNext: (String) -> Unit, onLogout, …)`; private `VideoPlayer` gains `nextEpisode` and `onPlayNext` parameters.
 
-- [ ] **Step 1: Update `PlayerScreen` signature and success branch**
+- [x] **Step 1: Update `PlayerScreen` signature and success branch**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt`, change the `PlayerScreen` signature to add `onPlayNext`:
 
@@ -910,7 +910,7 @@ Change the `Success` branch to pass the new values:
             }
 ```
 
-- [ ] **Step 2: Update the private `VideoPlayer` signature and state**
+- [x] **Step 2: Update the private `VideoPlayer` signature and state**
 
 Change the private composable signature to:
 
@@ -942,7 +942,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 ```
 
-- [ ] **Step 3: Trigger the countdown on `STATE_ENDED`**
+- [x] **Step 3: Trigger the countdown on `STATE_ENDED`**
 
 In the `playerListener`'s `onPlaybackStateChanged`, at the end of the method, add:
 
@@ -969,7 +969,7 @@ Then, after the existing `LaunchedEffect(player)` block, add:
     }
 ```
 
-- [ ] **Step 4: Add the Next Episode button and countdown overlay**
+- [x] **Step 4: Add the Next Episode button and countdown overlay**
 
 In the bottom controls `Row`, after the duration `Text`, add:
 
@@ -1010,7 +1010,7 @@ Inside the outer `Box` (the one with `background(Color.Black)`), after the botto
             }
 ```
 
-- [ ] **Step 5: Add the countdown constant**
+- [x] **Step 5: Add the countdown constant**
 
 At the bottom of the file, next to the existing `PROGRESS_INTERVAL_MS` constant, add:
 
@@ -1018,7 +1018,7 @@ At the bottom of the file, next to the existing `PROGRESS_INTERVAL_MS` constant,
 private const val COUNTDOWN_SECONDS = 8
 ```
 
-- [ ] **Step 6: Wire navigation in `AppNavHost`**
+- [x] **Step 6: Wire navigation in `AppNavHost`**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt`, change the `PlayerScreen` call in the `Routes.PLAYER` composable to:
 
@@ -1034,7 +1034,7 @@ In `android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt`, 
                     )
 ```
 
-- [ ] **Step 7: Compile and run tests**
+- [x] **Step 7: Compile and run tests**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL. This compiles the `PlayerScreen`/`AppNavHost` changes and runs the unit tests; the existing UI tests are unaffected because `PlayerScreen` is only constructed by `AppNavHost`.
@@ -1049,7 +1049,7 @@ Install the debug build and:
 5. Play the last episode of the last season → no Next Episode button and no countdown.
 6. Play a movie → no Next Episode button and no countdown.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt

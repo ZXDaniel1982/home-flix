@@ -24,6 +24,7 @@ export interface BaseItemDto {
 	Name: string;
 	Type?: string;
 	SeriesId?: string;
+	SeasonId?: string;
 	ProductionYear?: number;
 	IndexNumber?: number;
 	ImageTags?: Record<string, string>;
