@@ -5,9 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -51,6 +53,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlayerScreen(
     onBack: () -> Unit,
+    onPlayNext: (String) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory)
@@ -99,6 +102,8 @@ fun PlayerScreen(
                 VideoPlayer(
                     streamUrl = state.stream.url,
                     resumeTicks = state.resumeTicks,
+                    nextEpisode = state.nextEpisode,
+                    onPlayNext = onPlayNext,
                     onReportStarted = viewModel::reportStarted,
                     onReportProgress = viewModel::reportProgress,
                     onReportStopped = viewModel::reportStopped,
@@ -113,6 +118,8 @@ fun PlayerScreen(
 private fun VideoPlayer(
     streamUrl: String,
     resumeTicks: Long,
+    nextEpisode: PlayerViewModel.NextEpisode?,
+    onPlayNext: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
     onReportProgress: (Long, Boolean) -> Unit,
     onReportStopped: (Long) -> Unit,
@@ -130,6 +137,8 @@ private fun VideoPlayer(
     var startedReported by remember(streamUrl) { mutableStateOf(false) }
     var lastProgressAt by remember(streamUrl) { mutableStateOf(0L) }
     var resumeSeekDone by remember(streamUrl) { mutableStateOf(false) }
+    var showCountdown by remember(streamUrl) { mutableStateOf(false) }
+    var countdownRemaining by remember(streamUrl) { mutableStateOf(COUNTDOWN_SECONDS) }
 
     val player = remember(streamUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -174,6 +183,9 @@ private fun VideoPlayer(
                         player.seekTo(resumeTicks / 10_000)
                     }
                 }
+                if (state == Player.STATE_ENDED && nextEpisode != null) {
+                    showCountdown = true
+                }
             }
 
             override fun onPlayerErrorChanged(error: PlaybackException?) {
@@ -201,6 +213,19 @@ private fun VideoPlayer(
                 onReportProgress(msToTicks(player.currentPosition), false)
             }
             delay(250)
+        }
+    }
+
+    LaunchedEffect(showCountdown, nextEpisode) {
+        val next = nextEpisode
+        if (showCountdown && next != null) {
+            countdownRemaining = COUNTDOWN_SECONDS
+            while (countdownRemaining > 0) {
+                delay(1000)
+                countdownRemaining -= 1
+            }
+            showCountdown = false
+            onPlayNext(next.id)
         }
     }
 
@@ -276,6 +301,37 @@ private fun VideoPlayer(
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
+
+                    if (nextEpisode != null) {
+                        TextButton(onClick = { onPlayNext(nextEpisode.id) }) {
+                            Text("Next Episode", color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            if (showCountdown && nextEpisode != null) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .background(Color.Black.copy(alpha = 0.8f))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Next episode in ${countdownRemaining}s",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row {
+                        TextButton(onClick = { showCountdown = false }) {
+                            Text("Cancel")
+                        }
+                        TextButton(onClick = { onPlayNext(nextEpisode.id) }) {
+                            Text("Play Now")
+                        }
+                    }
                 }
             }
         }
@@ -303,3 +359,5 @@ private fun formatTime(ms: Long): String {
 private fun msToTicks(ms: Long): Long = ms * 10_000
 
 private const val PROGRESS_INTERVAL_MS = 10_000L
+
+private const val COUNTDOWN_SECONDS = 8
