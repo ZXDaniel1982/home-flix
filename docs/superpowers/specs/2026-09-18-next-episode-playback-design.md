@@ -144,7 +144,7 @@ suspend fun getNextEpisode(itemId: String): BaseItemDto?
 - **Next-episode lookup fails (either client):** behave as if no next episode exists — hide the button, never start the countdown. Playback itself is never affected.
 - **Web autoplay rejected after navigation:** the video stays paused on the next episode; the Next Episode button is still available and the native controls work.
 - **Timer after unmount:** timers are cleared on disposal, so no navigation occurs after the player is gone.
-- **Progress reporting:** the web player reports playback stopped for the outgoing episode exactly once, from the `ended` handler and from `goToNext()` (guarded by a per-item flag), and again on disposal via the cleanup effect; Android reports from `onDispose`. This ensures Jellyfin records the finished episode and marks it played even when advancing to the next episode.
+- **Progress reporting:** the web player reports playback stopped for the outgoing episode exactly once per playback session — from the `ended` handler and from `goToNext()` when advancing, or from the disposal cleanup if playback was abandoned — using a per-item guard to prevent duplicates; Android reports from `onDispose`. This ensures Jellyfin records the finished episode and marks it played even when advancing to the next episode.
 
 ## 8. Testing & verification
 
