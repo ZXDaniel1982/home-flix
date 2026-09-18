@@ -22,6 +22,9 @@ captures/
 .externalNativeBuild/
 .cxx/
 
+# Worktrees
+.worktrees/
+
 # General
 *.log
 .DS_Store
