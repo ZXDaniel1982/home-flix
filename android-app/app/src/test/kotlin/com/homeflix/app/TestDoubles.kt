@@ -63,6 +63,8 @@ class FakeMovieRepository : MovieRepository {
     var tvSeries: List<BaseItemDto> = emptyList()
     var seasons: List<BaseItemDto> = emptyList()
     var episodes: List<BaseItemDto> = emptyList()
+    var nextEpisode: BaseItemDto? = null
+    var nextEpisodeError: Exception? = null
     var searchResults: List<BaseItemDto> = emptyList()
     var resumeItems: List<BaseItemDto> = emptyList()
     var credentials: ImageCredentials = ImageCredentials("http://example/api", "token")
@@ -92,6 +94,12 @@ class FakeMovieRepository : MovieRepository {
     override suspend fun getEpisodes(seasonId: String): List<BaseItemDto> {
         error?.let { throw it }
         return episodes
+    }
+
+    override suspend fun getNextEpisode(itemId: String): BaseItemDto? {
+        nextEpisodeError?.let { throw it }
+        error?.let { throw it }
+        return nextEpisode
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {
