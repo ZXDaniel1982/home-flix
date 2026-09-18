@@ -21,3 +21,21 @@ internal fun nextSeason(seasons: List<BaseItemDto>, currentSeasonId: String): Ba
     if (index == -1) return null
     return seasons.getOrNull(index + 1)
 }
+
+/**
+ * Resolves the next episode when the current episode is [currentId].
+ * Returns null when [currentId] is not present in [currentSeasonEpisodes].
+ * Otherwise returns the next episode in the season, or [nextSeasonFirstEpisode]
+ * (invoked lazily, only when the current episode is the season finale).
+ *
+ * Marked `inline` so [nextSeasonFirstEpisode] may invoke suspend repository work from a
+ * suspend caller while this helper itself remains a pure, non-suspend function.
+ */
+internal inline fun resolveNextEpisode(
+    currentSeasonEpisodes: List<BaseItemDto>,
+    currentId: String,
+    nextSeasonFirstEpisode: () -> BaseItemDto?
+): BaseItemDto? {
+    if (currentSeasonEpisodes.none { it.id.toString() == currentId }) return null
+    return nextEpisodeInSeason(currentSeasonEpisodes, currentId) ?: nextSeasonFirstEpisode()
+}

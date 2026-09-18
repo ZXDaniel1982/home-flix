@@ -194,9 +194,9 @@ class JellyfinMovieRepository(
         val seasonId = item.seasonId?.toString() ?: return null
         val seasons = getSeasons(seriesId)
         val currentSeasonEpisodes = getEpisodes(seasonId)
-        nextEpisodeInSeason(currentSeasonEpisodes, itemId)?.let { return it }
-        val season = nextSeason(seasons, seasonId) ?: return null
-        return getEpisodes(season.id.toString()).firstOrNull()
+        return resolveNextEpisode(currentSeasonEpisodes, itemId) {
+            nextSeason(seasons, seasonId)?.let { getEpisodes(it.id.toString()).firstOrNull() }
+        }
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {

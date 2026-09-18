@@ -2,8 +2,10 @@ package com.homeflix.app
 
 import com.homeflix.app.data.nextEpisodeInSeason
 import com.homeflix.app.data.nextSeason
+import com.homeflix.app.data.resolveNextEpisode
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -55,5 +57,47 @@ class NextEpisodeTest {
         val seasons = listOf(baseItem(season1, "Season 1", type = BaseItemKind.SEASON, indexNumber = 1))
 
         assertNull(nextSeason(seasons, season1))
+    }
+
+    @Test
+    fun resolveNextEpisode_returnsNextInSeasonAndDoesNotAskForNextSeason() {
+        val episodes = listOf(
+            baseItem(episode1, "One", type = BaseItemKind.EPISODE, indexNumber = 1),
+            baseItem(episode2, "Two", type = BaseItemKind.EPISODE, indexNumber = 2)
+        )
+        var nextSeasonAsked = false
+
+        val result = resolveNextEpisode(episodes, episode1) {
+            nextSeasonAsked = true
+            baseItem(episode3, "Next season", type = BaseItemKind.EPISODE, indexNumber = 1)
+        }
+
+        assertEquals(episode2, result?.id?.toString())
+        assertFalse(nextSeasonAsked)
+    }
+
+    @Test
+    fun resolveNextEpisode_fallsBackToNextSeasonForFinale() {
+        val episodes = listOf(baseItem(episode1, "One", type = BaseItemKind.EPISODE, indexNumber = 1))
+
+        val result = resolveNextEpisode(episodes, episode1) {
+            baseItem(episode2, "Next season", type = BaseItemKind.EPISODE, indexNumber = 1)
+        }
+
+        assertEquals(episode2, result?.id?.toString())
+    }
+
+    @Test
+    fun resolveNextEpisode_returnsNullWhenCurrentEpisodeIsAbsent() {
+        val episodes = listOf(baseItem(episode1, "One", type = BaseItemKind.EPISODE, indexNumber = 1))
+        var nextSeasonAsked = false
+
+        val result = resolveNextEpisode(episodes, episode2) {
+            nextSeasonAsked = true
+            baseItem(episode3, "Next season", type = BaseItemKind.EPISODE, indexNumber = 1)
+        }
+
+        assertNull(result)
+        assertFalse(nextSeasonAsked)
     }
 }
