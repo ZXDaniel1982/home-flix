@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -69,5 +71,53 @@ class PlayerViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value is PlayerViewModel.UiState.Error)
+    }
+
+    @Test
+    fun load_episodeWithNext_setsNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
+        val nextId = "00000000-0000-0000-0000-000000000004"
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            nextEpisode = baseItem(nextId, "Episode 2", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertEquals(nextId, state.nextEpisode?.id)
+        assertEquals("Episode 2", state.nextEpisode?.title)
+    }
+
+    @Test
+    fun load_movie_hasNoNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(MOVIE_ID, "Movie")
+            nextEpisode = baseItem(
+                "00000000-0000-0000-0000-000000000004",
+                "Should be ignored",
+                type = BaseItemKind.EPISODE
+            )
+        }
+        val viewModel = createViewModel(repo)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertNull(state.nextEpisode)
+    }
+
+    @Test
+    fun load_nextEpisodeLookupFailure_stillSucceedsWithNull() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            nextEpisodeError = RuntimeException("boom")
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertNull(state.nextEpisode)
     }
 }

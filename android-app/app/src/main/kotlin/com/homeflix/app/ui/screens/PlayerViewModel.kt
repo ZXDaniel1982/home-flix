@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.model.api.BaseItemKind
 
 class PlayerViewModel(
     private val movieRepository: MovieRepository,
@@ -32,10 +33,16 @@ class PlayerViewModel(
 
     private var mediaSourceId: String = ""
 
+    data class NextEpisode(val id: String, val title: String)
+
     sealed interface UiState {
         data object Loading : UiState
         data class Error(val message: String) : UiState
-        data class Success(val stream: PlaybackStream, val resumeTicks: Long) : UiState
+        data class Success(
+            val stream: PlaybackStream,
+            val resumeTicks: Long,
+            val nextEpisode: NextEpisode?
+        ) : UiState
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -60,7 +67,22 @@ class PlayerViewModel(
                 val movie = movieRepository.getMovie(movieId)
                 mediaSourceId = stream.mediaSourceId
                 val resumeTicks = movie.userData?.playbackPositionTicks ?: 0L
-                _uiState.value = UiState.Success(stream, resumeTicks)
+                val nextEpisode = if (movie.type == BaseItemKind.EPISODE) {
+                    try {
+                        movieRepository.getNextEpisode(movieId)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        null
+                    }
+                } else {
+                    null
+                }
+                _uiState.value = UiState.Success(
+                    stream = stream,
+                    resumeTicks = resumeTicks,
+                    nextEpisode = nextEpisode?.let { NextEpisode(it.id.toString(), it.name.orEmpty()) }
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: InvalidStatusException) {
