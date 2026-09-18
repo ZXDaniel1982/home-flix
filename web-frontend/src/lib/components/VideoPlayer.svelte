@@ -162,10 +162,10 @@
 		);
 	}
 
-	function reportStopped() {
+	function reportStopped(el: HTMLVideoElement | null = video) {
 		if (stoppedReported || !mediaSourceId) return;
 		stoppedReported = true;
-		const ticks = Math.floor((video?.currentTime ?? 0) * 10_000_000);
+		const ticks = Math.floor((el?.currentTime ?? 0) * 10_000_000);
 		reportPlaybackStopped(itemId, mediaSourceId, ticks).catch(() => {});
 	}
 
@@ -174,7 +174,7 @@
 		if (!el) return;
 		return () => {
 			clearCountdown();
-			reportStopped();
+			reportStopped(el);
 		};
 	});
 </script>
