@@ -120,4 +120,18 @@ class PlayerViewModelTest {
         val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
         assertNull(state.nextEpisode)
     }
+
+    @Test
+    fun load_lastEpisode_hasNoNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Finale", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            nextEpisode = null
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertNull(state.nextEpisode)
+    }
 }
