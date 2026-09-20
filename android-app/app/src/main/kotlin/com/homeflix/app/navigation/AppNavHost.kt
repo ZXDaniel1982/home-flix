@@ -156,8 +156,8 @@ fun AppNavHost(
                 ) {
                     PlayerScreen(
                         onBack = { navController.popBackStack() },
-                        onPlayNext = { nextId ->
-                            navController.navigate(Routes.player(nextId)) {
+                        onPlayEpisode = { episodeId ->
+                            navController.navigate(Routes.player(episodeId)) {
                                 popUpTo(Routes.PLAYER) { inclusive = true }
                             }
                         },

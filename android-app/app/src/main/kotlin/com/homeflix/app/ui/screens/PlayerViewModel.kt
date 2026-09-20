@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.homeflix.app.HomeFlixApplication
+import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
 import com.homeflix.app.navigation.Routes
@@ -33,7 +34,7 @@ class PlayerViewModel(
 
     private var mediaSourceId: String = ""
 
-    data class NextEpisode(val id: String, val title: String)
+    data class EpisodeRef(val id: String)
 
     sealed interface UiState {
         data object Loading : UiState
@@ -41,7 +42,9 @@ class PlayerViewModel(
         data class Success(
             val stream: PlaybackStream,
             val resumeTicks: Long,
-            val nextEpisode: NextEpisode?
+            val isEpisode: Boolean,
+            val previousEpisode: EpisodeRef?,
+            val nextEpisode: EpisodeRef?
         ) : UiState
     }
 
@@ -67,13 +70,13 @@ class PlayerViewModel(
                 val movie = movieRepository.getMovie(movieId)
                 mediaSourceId = stream.mediaSourceId
                 val resumeTicks = movie.userData?.playbackPositionTicks ?: 0L
-                val nextEpisode = if (movie.type == BaseItemKind.EPISODE) {
+                val adjacent = if (movie.type == BaseItemKind.EPISODE) {
                     try {
-                        movieRepository.getNextEpisode(movieId)
+                        movieRepository.getAdjacentEpisodes(movieId)
                     } catch (e: CancellationException) {
                         throw e
                     } catch (_: Exception) {
-                        null
+                        AdjacentEpisodes(previous = null, next = null)
                     }
                 } else {
                     null
@@ -81,7 +84,9 @@ class PlayerViewModel(
                 _uiState.value = UiState.Success(
                     stream = stream,
                     resumeTicks = resumeTicks,
-                    nextEpisode = nextEpisode?.let { NextEpisode(it.id.toString(), it.name.orEmpty()) }
+                    isEpisode = movie.type == BaseItemKind.EPISODE,
+                    previousEpisode = adjacent?.previous?.let { EpisodeRef(it.id.toString()) },
+                    nextEpisode = adjacent?.next?.let { EpisodeRef(it.id.toString()) }
                 )
             } catch (e: CancellationException) {
                 throw e

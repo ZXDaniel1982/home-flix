@@ -40,7 +40,9 @@ Use the search bar to find movies and series by name. Selecting a result opens i
 
 ### Playback
 
-- Play/pause, seek, and volume use the browser's native video controls.
+- Controls are a custom bar: previous/next episode, play/pause, seek, and fullscreen. There is no in-player volume control (use system/keyboard volume).
+- For TV episodes, `|<` and `>|` play the previous/next episode **within the current season**; each is greyed out at the first/last episode of a season.
+- When an episode ends, a countdown auto-plays the next episode **within the same season** (none at a season finale).
 - Playback **resumes** from where you left off; progress is saved back to Jellyfin.
 - If a file can't be played, a message appears — it is usually an unsupported format (only H.264/AAC/MP4 plays).
 
@@ -61,7 +63,9 @@ The bottom bar has four tabs:
 
 ### Playback
 
-- Custom controls: play/pause and a seek bar with elapsed/total time.
+- Custom controls: previous/next episode, play/pause, and a seek bar with elapsed/total time.
+- For TV episodes, previous/next stay **within the current season** and are greyed out at the first/last episode of a season.
+- When an episode ends, a countdown auto-plays the next in-season episode.
 - Playback **resumes** from the last position; progress is reported to Jellyfin.
 - Unsupported files show an error message instead of playing.
 
