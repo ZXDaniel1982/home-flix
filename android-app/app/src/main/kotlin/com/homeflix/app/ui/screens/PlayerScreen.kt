@@ -272,7 +272,7 @@ private fun VideoPlayer(
                             Icon(
                                 imageVector = Icons.Filled.SkipPrevious,
                                 contentDescription = "Previous episode",
-                                tint = if (previousEpisode != null) Color.White else Color.White.copy(alpha = 0.3f)
+                                tint = if (previousEpisode != null) Color.White else Color.White.copy(alpha = DISABLED_TINT_ALPHA)
                             )
                         }
                     }
@@ -302,7 +302,7 @@ private fun VideoPlayer(
                             Icon(
                                 imageVector = Icons.Filled.SkipNext,
                                 contentDescription = "Next episode",
-                                tint = if (nextEpisode != null) Color.White else Color.White.copy(alpha = 0.3f)
+                                tint = if (nextEpisode != null) Color.White else Color.White.copy(alpha = DISABLED_TINT_ALPHA)
                             )
                         }
                     }
@@ -387,3 +387,5 @@ private fun msToTicks(ms: Long): Long = ms * 10_000
 private const val PROGRESS_INTERVAL_MS = 10_000L
 
 private const val COUNTDOWN_SECONDS = 8
+
+private const val DISABLED_TINT_ALPHA = 0.35f
