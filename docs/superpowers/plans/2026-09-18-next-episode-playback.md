@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Superseded 2026-09-20:** the behavior implemented by this plan was revised to season-scoped prev/next icon controls. See `docs/superpowers/specs/2026-09-20-episode-navigation-controls-design.md` and its plan `docs/superpowers/plans/2026-09-20-episode-navigation-controls.md`. This file is a historical record.
+
 **Goal:** Add auto-play of the next episode (after an 8-second countdown) and an always-available Next Episode button to episode playback in both the web frontend and the Android app.
 
 **Architecture:** Each client resolves the next episode from Jellyfin metadata using existing season/episode queries, in series order (current season by `IndexNumber`, rolling into the next season at a finale). The web player computes it in `getNextEpisode()` and navigates to the next episode URL with `?autoplay=1`; the Android player exposes it on `PlayerViewModel.UiState.Success` and navigates to a new player route. The resolution primitives are pure functions unit-tested in isolation; the UI wiring is verified by type-check/lint/compile and manual playback.

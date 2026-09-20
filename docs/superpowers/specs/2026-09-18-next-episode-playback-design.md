@@ -1,8 +1,10 @@
 # Design — Next Episode Playback (Auto-play + Next Episode Button)
 
 **Date:** 2026-09-18
-**Status:** Draft (awaiting review)
+**Status:** Superseded — revised by `docs/superpowers/specs/2026-09-20-episode-navigation-controls-design.md`
 **Scope:** Enhancement to TV episode playback in both clients (web frontend + Android app). Not tied to an existing project-plan story.
+
+> **Superseded 2026-09-20.** The behavior below was implemented, shipped, and then revised. The 2026-09-20 spec is now authoritative. Key changes: (1) neighbor resolution and auto-play are **season-scoped** — no cross-season rollover; (2) the top-right text "Next Episode" button became **`|<` / `>|` icon buttons flanking play/pause**; (3) the web player uses a **custom control bar** instead of native `<video controls>`; (4) Android gained a previous-episode button. Read this document for history only.
 
 ## 1. Context
 
