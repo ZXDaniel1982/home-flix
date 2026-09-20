@@ -33,7 +33,7 @@ interface MovieRepository {
 
     suspend fun getEpisodes(seasonId: String): List<BaseItemDto>
 
-    suspend fun getNextEpisode(itemId: String): BaseItemDto?
+    suspend fun getAdjacentEpisodes(itemId: String): AdjacentEpisodes?
 
     suspend fun search(query: String, limit: Int): List<BaseItemDto>
 
@@ -53,6 +53,8 @@ interface MovieRepository {
 data class ImageCredentials(val baseUrl: String, val accessToken: String)
 
 data class PlaybackStream(val url: String, val mediaSourceId: String)
+
+data class AdjacentEpisodes(val previous: BaseItemDto?, val next: BaseItemDto?)
 
 fun buildImageUrl(
     baseUrl: String,
@@ -187,16 +189,15 @@ class JellyfinMovieRepository(
         return response.content.items.orEmpty()
     }
 
-    override suspend fun getNextEpisode(itemId: String): BaseItemDto? {
+    override suspend fun getAdjacentEpisodes(itemId: String): AdjacentEpisodes? {
         val item = getMovie(itemId)
         if (item.type != BaseItemKind.EPISODE) return null
-        val seriesId = item.seriesId?.toString() ?: return null
-        val seasonId = item.seasonId?.toString() ?: return null
-        val seasons = getSeasons(seriesId)
-        val currentSeasonEpisodes = getEpisodes(seasonId)
-        return resolveNextEpisode(currentSeasonEpisodes, itemId) {
-            nextSeason(seasons, seasonId)?.let { getEpisodes(it.id.toString()).firstOrNull() }
-        }
+        val seasonId = item.seasonId?.toString() ?: return AdjacentEpisodes(null, null)
+        val episodes = getEpisodes(seasonId)
+        return AdjacentEpisodes(
+            previous = previousEpisodeInSeason(episodes, itemId),
+            next = nextEpisodeInSeason(episodes, itemId)
+        )
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {

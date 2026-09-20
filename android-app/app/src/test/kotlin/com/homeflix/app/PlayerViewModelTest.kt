@@ -2,6 +2,7 @@
 package com.homeflix.app
 
 import androidx.lifecycle.SavedStateHandle
+import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.PlaybackStream
 import com.homeflix.app.navigation.Routes
 import com.homeflix.app.ui.screens.PlayerViewModel
@@ -74,64 +75,96 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun load_episodeWithNext_setsNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
-        val nextId = "00000000-0000-0000-0000-000000000004"
+    fun load_episodeWithNeighbors_setsBoth() = runTest(mainDispatcherRule.testDispatcher) {
+        val previousId = "00000000-0000-0000-0000-000000000004"
+        val nextId = "00000000-0000-0000-0000-000000000005"
         val repo = FakeMovieRepository().apply {
             stream = PlaybackStream("http://host/stream", "ms1")
-            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
-            nextEpisode = baseItem(nextId, "Episode 2", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            movie = baseItem(EPISODE_ID, "Episode 2", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            adjacentEpisodes = AdjacentEpisodes(
+                previous = baseItem(previousId, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID),
+                next = baseItem(nextId, "Episode 3", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            )
         }
         val viewModel = createViewModel(repo, movieId = EPISODE_ID)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertEquals(true, state.isEpisode)
+        assertEquals(previousId, state.previousEpisode?.id)
         assertEquals(nextId, state.nextEpisode?.id)
-        assertEquals("Episode 2", state.nextEpisode?.title)
     }
 
     @Test
-    fun load_movie_hasNoNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
+    fun load_firstEpisodeOfSeason_hasNoPrevious() = runTest(mainDispatcherRule.testDispatcher) {
+        val nextId = "00000000-0000-0000-0000-000000000005"
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            adjacentEpisodes = AdjacentEpisodes(
+                previous = null,
+                next = baseItem(nextId, "Episode 2", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            )
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertNull(state.previousEpisode)
+        assertEquals(nextId, state.nextEpisode?.id)
+    }
+
+    @Test
+    fun load_lastEpisodeOfSeason_hasNoNext() = runTest(mainDispatcherRule.testDispatcher) {
+        val previousId = "00000000-0000-0000-0000-000000000004"
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Finale", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            adjacentEpisodes = AdjacentEpisodes(
+                previous = baseItem(previousId, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID),
+                next = null
+            )
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertEquals(previousId, state.previousEpisode?.id)
+        assertNull(state.nextEpisode)
+    }
+
+    @Test
+    fun load_movie_isNotEpisode() = runTest(mainDispatcherRule.testDispatcher) {
         val repo = FakeMovieRepository().apply {
             stream = PlaybackStream("http://host/stream", "ms1")
             movie = baseItem(MOVIE_ID, "Movie")
-            nextEpisode = baseItem(
-                "00000000-0000-0000-0000-000000000004",
-                "Should be ignored",
-                type = BaseItemKind.EPISODE
+            adjacentEpisodes = AdjacentEpisodes(
+                previous = baseItem("00000000-0000-0000-0000-000000000004", "Ignored"),
+                next = baseItem("00000000-0000-0000-0000-000000000005", "Ignored")
             )
         }
         val viewModel = createViewModel(repo)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertEquals(false, state.isEpisode)
+        assertNull(state.previousEpisode)
         assertNull(state.nextEpisode)
     }
 
     @Test
-    fun load_nextEpisodeLookupFailure_stillSucceedsWithNull() = runTest(mainDispatcherRule.testDispatcher) {
+    fun load_neighborLookupFailure_episodeHasNoNeighbors() = runTest(mainDispatcherRule.testDispatcher) {
         val repo = FakeMovieRepository().apply {
             stream = PlaybackStream("http://host/stream", "ms1")
             movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
-            nextEpisodeError = RuntimeException("boom")
+            adjacentEpisodesError = RuntimeException("boom")
         }
         val viewModel = createViewModel(repo, movieId = EPISODE_ID)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
-        assertNull(state.nextEpisode)
-    }
-
-    @Test
-    fun load_lastEpisode_hasNoNextEpisode() = runTest(mainDispatcherRule.testDispatcher) {
-        val repo = FakeMovieRepository().apply {
-            stream = PlaybackStream("http://host/stream", "ms1")
-            movie = baseItem(EPISODE_ID, "Finale", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
-            nextEpisode = null
-        }
-        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
-        advanceUntilIdle()
-
-        val state = viewModel.uiState.value as PlayerViewModel.UiState.Success
+        assertEquals(true, state.isEpisode)
+        assertNull(state.previousEpisode)
         assertNull(state.nextEpisode)
     }
 }

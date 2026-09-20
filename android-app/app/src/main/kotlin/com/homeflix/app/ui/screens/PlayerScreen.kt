@@ -118,7 +118,7 @@ fun PlayerScreen(
 private fun VideoPlayer(
     streamUrl: String,
     resumeTicks: Long,
-    nextEpisode: PlayerViewModel.NextEpisode?,
+    nextEpisode: PlayerViewModel.EpisodeRef?,
     onPlayNext: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
     onReportProgress: (Long, Boolean) -> Unit,
