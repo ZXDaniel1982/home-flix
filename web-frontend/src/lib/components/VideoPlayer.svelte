@@ -406,6 +406,19 @@
 		border-radius: 0.5rem;
 	}
 
+	.player:fullscreen {
+		max-width: none;
+		width: 100%;
+		height: 100%;
+		background-color: #000;
+	}
+
+	.player:fullscreen video {
+		height: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+
 	.controls {
 		position: absolute;
 		left: 0;
