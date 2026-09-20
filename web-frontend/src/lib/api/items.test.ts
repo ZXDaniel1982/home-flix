@@ -129,6 +129,15 @@ describe('getEpisodeNeighbors', () => {
 		expect(neighbors).toEqual({ previous: null, next: null });
 	});
 
+	it('returns both null when the current episode is absent from its season', async () => {
+		setSession('tok', { Id: 'u1', Name: 'Alice' });
+		stubEpisodes(list);
+
+		const neighbors = await getEpisodeNeighbors(episode({ Id: 'missing-episode' }));
+
+		expect(neighbors).toEqual({ previous: null, next: null });
+	});
+
 	it('returns null for a non-episode item without fetching', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
 		const fn = vi.fn<typeof fetch>();
