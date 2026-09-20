@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getItem, getMovies, getNextEpisode, search } from './items';
+import { getItem, getMovies, getEpisodeNeighbors, search } from './items';
 import { setSession } from './session';
 import type { BaseItemDto } from './types';
 
@@ -70,78 +70,63 @@ describe('items', () => {
 	});
 });
 
-describe('getNextEpisode', () => {
-	it('returns the next episode in the same season', async () => {
+describe('getEpisodeNeighbors', () => {
+	const list = [
+		{ Id: 'e1', Name: 'One', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1', IndexNumber: 1 },
+		{ Id: 'e2', Name: 'Two', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1', IndexNumber: 2 },
+		{
+			Id: 'e3',
+			Name: 'Three',
+			Type: 'Episode',
+			SeriesId: 'series1',
+			SeasonId: 's1',
+			IndexNumber: 3
+		}
+	];
+
+	function stubEpisodes(items: unknown[]) {
+		const fn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: items }));
+		vi.stubGlobal('fetch', fn);
+		return fn;
+	}
+
+	it('returns the previous and next episodes in the same season', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockImplementation(async (input) => {
-				const url = input as string;
-				if (url.includes('IncludeItemTypes=Season')) {
-					return jsonResponse({ Items: [{ Id: 's1', Name: 'Season 1', IndexNumber: 1 }] });
-				}
-				return jsonResponse({
-					Items: [
-						{ Id: 'e1', Name: 'One', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1' },
-						{ Id: 'e2', Name: 'Two', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1' }
-					]
-				});
-			})
-		);
+		stubEpisodes(list);
 
-		const next = await getNextEpisode(episode({ Id: 'e1' }));
+		const neighbors = await getEpisodeNeighbors(episode({ Id: 'e2' }));
 
-		expect(next?.Id).toBe('e2');
+		expect(neighbors?.previous?.Id).toBe('e1');
+		expect(neighbors?.next?.Id).toBe('e3');
 	});
 
-	it('returns the first episode of the next season after a season finale', async () => {
+	it('returns null previous for the first episode of a season', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockImplementation(async (input) => {
-				const url = input as string;
-				if (url.includes('IncludeItemTypes=Season')) {
-					return jsonResponse({
-						Items: [
-							{ Id: 's1', Name: 'Season 1', IndexNumber: 1 },
-							{ Id: 's2', Name: 'Season 2', IndexNumber: 2 }
-						]
-					});
-				}
-				if (url.includes('ParentId=s2')) {
-					return jsonResponse({
-						Items: [
-							{ Id: 'e2s1', Name: 'S2E1', Type: 'Episode', SeriesId: 'series1', SeasonId: 's2' }
-						]
-					});
-				}
-				return jsonResponse({
-					Items: [{ Id: 'e1', Name: 'One', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1' }]
-				});
-			})
-		);
+		stubEpisodes(list);
 
-		const next = await getNextEpisode(episode({ Id: 'e1' }));
+		const neighbors = await getEpisodeNeighbors(episode({ Id: 'e1' }));
 
-		expect(next?.Id).toBe('e2s1');
+		expect(neighbors?.previous).toBeNull();
+		expect(neighbors?.next?.Id).toBe('e2');
 	});
 
-	it('returns null for the last episode of the last season', async () => {
+	it('returns null next for the last episode of a season', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockImplementation(async (input) => {
-				const url = input as string;
-				if (url.includes('IncludeItemTypes=Season')) {
-					return jsonResponse({ Items: [{ Id: 's1', Name: 'Season 1', IndexNumber: 1 }] });
-				}
-				return jsonResponse({
-					Items: [{ Id: 'e1', Name: 'One', Type: 'Episode', SeriesId: 'series1', SeasonId: 's1' }]
-				});
-			})
-		);
+		stubEpisodes(list);
 
-		expect(await getNextEpisode(episode({ Id: 'e1' }))).toBeNull();
+		const neighbors = await getEpisodeNeighbors(episode({ Id: 'e3' }));
+
+		expect(neighbors?.next).toBeNull();
+		expect(neighbors?.previous?.Id).toBe('e2');
+	});
+
+	it('returns both null for a single-episode season', async () => {
+		setSession('tok', { Id: 'u1', Name: 'Alice' });
+		stubEpisodes([list[0]]);
+
+		const neighbors = await getEpisodeNeighbors(episode({ Id: 'e1' }));
+
+		expect(neighbors).toEqual({ previous: null, next: null });
 	});
 
 	it('returns null for a non-episode item without fetching', async () => {
@@ -149,29 +134,31 @@ describe('getNextEpisode', () => {
 		const fn = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fn);
 
-		expect(await getNextEpisode({ Id: 'm1', Name: 'Movie', Type: 'Movie' })).toBeNull();
+		expect(await getEpisodeNeighbors({ Id: 'm1', Name: 'Movie', Type: 'Movie' })).toBeNull();
 		expect(fn).not.toHaveBeenCalled();
 	});
 
-	it('returns null when the episode has no season id', async () => {
+	it('returns both null when the episode has no season id, without fetching', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
 		const fn = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fn);
 
-		expect(
-			await getNextEpisode({ Id: 'e1', Name: 'One', Type: 'Episode', SeriesId: 'series1' })
-		).toBeNull();
+		expect(await getEpisodeNeighbors(episode({ SeasonId: undefined }))).toEqual({
+			previous: null,
+			next: null
+		});
 		expect(fn).not.toHaveBeenCalled();
 	});
 
-	it('returns null when the episode has no series id', async () => {
+	it('returns both null when the episode has no series id, without fetching', async () => {
 		setSession('tok', { Id: 'u1', Name: 'Alice' });
 		const fn = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fn);
 
-		expect(
-			await getNextEpisode({ Id: 'e1', Name: 'One', Type: 'Episode', SeasonId: 's1' })
-		).toBeNull();
+		expect(await getEpisodeNeighbors(episode({ SeriesId: undefined }))).toEqual({
+			previous: null,
+			next: null
+		});
 		expect(fn).not.toHaveBeenCalled();
 	});
 });
