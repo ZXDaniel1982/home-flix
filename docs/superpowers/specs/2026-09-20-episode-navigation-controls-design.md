@@ -1,7 +1,7 @@
 # Design — Season-Scoped Episode Navigation Controls
 
 **Date:** 2026-09-20
-**Status:** Draft (awaiting review)
+**Status:** Accepted
 **Scope:** Revision of the episode navigation UI added on 2026-09-18. Applies to both clients (web frontend + Android app).
 **Supersedes:** `docs/superpowers/specs/2026-09-18-next-episode-playback-design.md`
 

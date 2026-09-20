@@ -53,7 +53,7 @@
 - Consumes: existing `getEpisodes(seasonId): Promise<BaseItemDto[]>`.
 - Produces: `EpisodeNeighbors { previous: BaseItemDto | null; next: BaseItemDto | null }` and `getEpisodeNeighbors(episode: BaseItemDto): Promise<EpisodeNeighbors | null>`.
 
-- [ ] **Step 1: Replace the resolver tests**
+- [x] **Step 1: Replace the resolver tests**
 
 In `web-frontend/src/lib/api/items.test.ts`, change the import on line 2 to:
 
@@ -151,12 +151,12 @@ describe('getEpisodeNeighbors', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: FAIL — `getEpisodeNeighbors` is not exported.
 
-- [ ] **Step 3: Implement `getEpisodeNeighbors`**
+- [x] **Step 3: Implement `getEpisodeNeighbors`**
 
 In `web-frontend/src/lib/api/items.ts`, replace the entire `getNextEpisode` function (lines 62-83) with:
 
@@ -187,21 +187,21 @@ export async function getEpisodeNeighbors(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: PASS (all `getEpisodeNeighbors` cases).
 
-- [ ] **Step 5: Verify no other callers of the old function**
+- [x] **Step 5: Verify no other callers of the old function**
 
 Run (from the repo root): `grep -rn "getNextEpisode" web-frontend/src` — expected: no matches.
 
-- [ ] **Step 6: Type check and lint**
+- [x] **Step 6: Type check and lint**
 
 Run (from `web-frontend/`): `npm run check && npm run lint`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add web-frontend/src/lib/api/items.ts web-frontend/src/lib/api/items.test.ts
@@ -219,7 +219,7 @@ git commit -m "feat(web): resolve season-scoped episode neighbors"
 - Consumes: `getEpisodeNeighbors` / `EpisodeNeighbors` from Task 1.
 - Produces: nothing consumed by later tasks (Android tasks are independent).
 
-- [ ] **Step 1: Replace the whole component**
+- [x] **Step 1: Replace the whole component**
 
 Replace the entire contents of `web-frontend/src/lib/components/VideoPlayer.svelte` with:
 
@@ -712,7 +712,7 @@ Replace the entire contents of `web-frontend/src/lib/components/VideoPlayer.svel
 </style>
 ```
 
-- [ ] **Step 2: Type check, lint, build, tests**
+- [x] **Step 2: Type check, lint, build, tests**
 
 Run (from `web-frontend/`): `npm run check && npm run lint && npm run build && npm test`
 Expected: all pass. (In particular, no `a11y` lint errors from the custom controls.)
@@ -721,7 +721,7 @@ Expected: all pass. (In particular, no `a11y` lint errors from the custom contro
 
 If a Jellyfin server is reachable, run `npm run dev` and verify: first episode of a season (prev greyed), middle episode (both active), last episode of a season (next greyed and no countdown at the end), single-episode season (both greyed), a movie (no prev/next), prev/next navigation, play/pause, seek, and fullscreen. If no server is available in this environment, record that this was deferred to the human.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web-frontend/src/lib/components/VideoPlayer.svelte
@@ -752,7 +752,7 @@ git commit -m "feat(web): season-scoped prev/next episode controls with custom c
 
 > This task replaces the removed `getNextEpisode` call site in the same task so the Android module keeps compiling throughout.
 
-- [ ] **Step 1: Replace the helper tests**
+- [x] **Step 1: Replace the helper tests**
 
 Replace the entire contents of `android-app/app/src/test/kotlin/com/homeflix/app/NextEpisodeTest.kt` with:
 
@@ -810,12 +810,12 @@ class NextEpisodeTest {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest --tests "com.homeflix.app.NextEpisodeTest"`
 Expected: FAIL to compile — `previousEpisodeInSeason` is unresolved.
 
-- [ ] **Step 3: Replace the helper implementation**
+- [x] **Step 3: Replace the helper implementation**
 
 Replace the entire contents of `android-app/app/src/main/kotlin/com/homeflix/app/data/NextEpisode.kt` with:
 
@@ -845,12 +845,12 @@ internal fun nextEpisodeInSeason(episodes: List<BaseItemDto>, currentId: String)
 }
 ```
 
-- [ ] **Step 4: Run helper tests to verify they pass**
+- [x] **Step 4: Run helper tests to verify they pass**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest --tests "com.homeflix.app.NextEpisodeTest"`
 Expected: PASS.
 
-- [ ] **Step 5: Update the repository interface and implementation**
+- [x] **Step 5: Update the repository interface and implementation**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt`:
 
@@ -881,7 +881,7 @@ Replace the `JellyfinMovieRepository.getNextEpisode` override (lines 190-200) wi
     }
 ```
 
-- [ ] **Step 6: Update `FakeMovieRepository`**
+- [x] **Step 6: Update `FakeMovieRepository`**
 
 In `android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt`, replace the fields
 
@@ -907,7 +907,7 @@ Add the import `com.homeflix.app.data.AdjacentEpisodes`, and replace the `getNex
     }
 ```
 
-- [ ] **Step 7: Update `PlayerViewModel` neighbor state and mapping**
+- [x] **Step 7: Update `PlayerViewModel` neighbor state and mapping**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt`, add `import com.homeflix.app.data.AdjacentEpisodes` before `import com.homeflix.app.data.MovieRepository`.
 
@@ -958,7 +958,7 @@ In `load()`, replace the `nextEpisode` computation and the `_uiState.value = UiS
                 )
 ```
 
-- [ ] **Step 8: Replace the neighbor tests**
+- [x] **Step 8: Replace the neighbor tests**
 
 In `android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt`, add the import `com.homeflix.app.data.AdjacentEpisodes` and replace the five tests from `load_episodeWithNext_setsNextEpisode` through the end of the class with:
 
@@ -1058,12 +1058,12 @@ In `android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt`, ad
     }
 ```
 
-- [ ] **Step 9: Run the Android unit test suite**
+- [x] **Step 9: Run the Android unit test suite**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all tests pass.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/data/NextEpisode.kt android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt android-app/app/src/test/kotlin/com/homeflix/app/NextEpisodeTest.kt android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt
@@ -1082,7 +1082,7 @@ git commit -m "feat(android): season-scoped adjacent episodes and player state"
 - Consumes: `PlayerViewModel.EpisodeRef`, `UiState.Success(isEpisode, previousEpisode, nextEpisode)` from Task 3.
 - Produces: `PlayerScreen(onBack, onPlayEpisode: (String) -> Unit, onLogout, …)`.
 
-- [ ] **Step 1: Add the skip icons import**
+- [x] **Step 1: Add the skip icons import**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt`, add after the existing `import androidx.compose.material.icons.filled.PlayArrow`:
 
@@ -1091,7 +1091,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 ```
 
-- [ ] **Step 2: Rename the callback in `PlayerScreen`**
+- [x] **Step 2: Rename the callback in `PlayerScreen`**
 
 Change the `PlayerScreen` signature parameter from `onPlayNext: (String) -> Unit` to `onPlayEpisode: (String) -> Unit`, and change the `Success` branch to:
 
@@ -1112,7 +1112,7 @@ Change the `PlayerScreen` signature parameter from `onPlayNext: (String) -> Unit
             }
 ```
 
-- [ ] **Step 3: Update the private `VideoPlayer` signature**
+- [x] **Step 3: Update the private `VideoPlayer` signature**
 
 Change the private composable signature to:
 
@@ -1132,7 +1132,7 @@ private fun VideoPlayer(
 )
 ```
 
-- [ ] **Step 4: Replace the control-row buttons**
+- [x] **Step 4: Replace the control-row buttons**
 
 In the bottom controls `Row`, replace the play/pause `IconButton` and remove the trailing `TextButton`. The row should read:
 
@@ -1212,11 +1212,11 @@ In the bottom controls `Row`, replace the play/pause `IconButton` and remove the
 
 This removes the previous `TextButton { Text("Next Episode", …) }` block at the end of the row.
 
-- [ ] **Step 5: Update the countdown callback**
+- [x] **Step 5: Update the countdown callback**
 
 In the `LaunchedEffect(showCountdown, nextEpisode)` block, change `onPlayNext(next.id)` to `onPlayEpisode(next.id)`. In the countdown overlay, change the `Play Now` button's `onClick = { onPlayNext(nextEpisode.id) }` to `onClick = { onPlayEpisode(nextEpisode.id) }`. The `STATE_ENDED` guard `nextEpisode != null` stays as-is (now an `EpisodeRef`).
 
-- [ ] **Step 6: Wire navigation in `AppNavHost`**
+- [x] **Step 6: Wire navigation in `AppNavHost`**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt`, change the `PlayerScreen` call to:
 
@@ -1232,7 +1232,7 @@ In `android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt`, 
                     )
 ```
 
-- [ ] **Step 7: Compile and run tests**
+- [x] **Step 7: Compile and run tests**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
@@ -1241,7 +1241,7 @@ Expected: BUILD SUCCESSFUL.
 
 Install the APK on the Windows emulator per `docs/development.md` §6.4 and verify: first/last episode of a season (one button greyed), middle (both active), single-episode season (both greyed), movie (no prev/next), prev/next navigation, and that the countdown does not appear at a season finale. Record if this is deferred to the human.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt
