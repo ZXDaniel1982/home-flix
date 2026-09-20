@@ -8,7 +8,7 @@
 		reportPlaybackProgress,
 		reportPlaybackStopped
 	} from '$lib/api/playback';
-	import { getItem, getNextEpisode } from '$lib/api/items';
+	import { getItem, getEpisodeNeighbors, type EpisodeNeighbors } from '$lib/api/items';
 	import type { MediaSourceInfo, BaseItemDto } from '$lib/api/types';
 
 	let {
@@ -29,10 +29,19 @@
 	let error = $state('');
 	let playbackError = $state(false);
 	let video = $state<HTMLVideoElement | null>(null);
-	let nextEpisode = $state<BaseItemDto | null>(null);
+	let playerEl = $state<HTMLDivElement | null>(null);
+	let neighbors = $state<EpisodeNeighbors | null>(null);
 	let seriesId = $state('');
+	let isPlaying = $state(false);
+	let currentTime = $state(0);
+	let duration = $state(0);
+	let scrubValue = $state<number | null>(null);
+	let isFullscreen = $state(false);
 	let showCountdown = $state(false);
 	let countdownRemaining = $state(COUNTDOWN_SECONDS);
+
+	let previousEpisode = $derived(neighbors?.previous ?? null);
+	let nextEpisode = $derived(neighbors?.next ?? null);
 
 	let mediaSourceId = '';
 	let resumeTicks = 0;
@@ -49,8 +58,12 @@
 		resumeTicks = 0;
 		lastReportAt = 0;
 		stoppedReported = false;
-		nextEpisode = null;
+		neighbors = null;
 		seriesId = '';
+		isPlaying = false;
+		currentTime = 0;
+		duration = 0;
+		scrubValue = null;
 		cancelCountdown();
 		if (!itemId) {
 			error = 'Invalid item.';
@@ -58,11 +71,11 @@
 			return;
 		}
 		load(itemId)
-			.then(({ src, msId, ticks, next, series }) => {
+			.then(({ src, msId, ticks, adjacent, series }) => {
 				streamSrc = src;
 				mediaSourceId = msId;
 				resumeTicks = ticks;
-				nextEpisode = next;
+				neighbors = adjacent;
 				seriesId = series;
 			})
 			.catch(() => {
@@ -81,14 +94,26 @@
 		if (!source) {
 			throw new Error('No playable media source');
 		}
-		const next = item.Type === 'Episode' ? await getNextEpisode(item).catch(() => null) : null;
+		const adjacent = await getEpisodeNeighbors(item).catch(() =>
+			item.Type === 'Episode' ? { previous: null, next: null } : null
+		);
 		return {
 			src: streamUrl(id, source.Id),
 			msId: source.Id,
 			ticks: item.UserData?.PlaybackPositionTicks ?? 0,
-			next,
+			adjacent,
 			series: item.SeriesId ?? ''
 		};
+	}
+
+	function formatTime(seconds: number): string {
+		const total = Math.max(0, Math.floor(seconds));
+		const hours = Math.floor(total / 3600);
+		const minutes = Math.floor((total % 3600) / 60);
+		const secs = total % 60;
+		const mm = hours > 0 ? String(minutes).padStart(2, '0') : String(minutes);
+		const ss = String(secs).padStart(2, '0');
+		return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
 	}
 
 	function currentTicks(): number {
@@ -96,31 +121,85 @@
 	}
 
 	function onLoadedMetadata() {
-		if (video && resumeTicks > 0) {
-			video.currentTime = resumeTicks / 10_000_000;
+		const el = video;
+		if (!el) return;
+		duration = Number.isFinite(el.duration) ? el.duration : 0;
+		if (resumeTicks > 0) {
+			el.currentTime = resumeTicks / 10_000_000;
 		}
 	}
 
 	function onPlay() {
 		stoppedReported = false;
+		isPlaying = true;
 		reportPlaybackStarted(itemId, mediaSourceId, currentTicks()).catch(() => {});
 	}
 
+	function onPause() {
+		isPlaying = false;
+		sendProgress();
+	}
+
 	function onTimeUpdate() {
+		const el = video;
+		if (el) {
+			currentTime = el.currentTime;
+			if (Number.isFinite(el.duration)) duration = el.duration;
+		}
 		const now = Date.now();
 		if (now - lastReportAt < PROGRESS_INTERVAL_MS) return;
 		lastReportAt = now;
 		sendProgress();
 	}
 
-	function onPause() {
-		sendProgress();
-	}
-
 	function onEnded() {
+		isPlaying = false;
 		reportStopped();
 		if (!nextEpisode) return;
 		startCountdown();
+	}
+
+	function togglePlay() {
+		const el = video;
+		if (!el) return;
+		if (el.ended) {
+			el.currentTime = 0;
+			el.play().catch(() => {});
+		} else if (el.paused) {
+			el.play().catch(() => {});
+		} else {
+			el.pause();
+		}
+	}
+
+	function onSeekInput(event: Event) {
+		scrubValue = Number((event.currentTarget as HTMLInputElement).value);
+	}
+
+	function onSeekCommit() {
+		if (scrubValue !== null && video) {
+			video.currentTime = scrubValue;
+			currentTime = scrubValue;
+		}
+		scrubValue = null;
+	}
+
+	async function toggleFullscreen() {
+		const container = playerEl;
+		if (!container) return;
+		try {
+			if (document.fullscreenElement) {
+				await document.exitFullscreen();
+			} else {
+				await container.requestFullscreen();
+			}
+		} catch {
+			// Fullscreen may be unavailable; ignore.
+		}
+	}
+
+	function onFullscreenChange() {
+		isFullscreen = document.fullscreenElement != null;
 	}
 
 	function startCountdown() {
@@ -147,12 +226,20 @@
 		}
 	}
 
-	function goToNext() {
-		if (!nextEpisode) return;
+	function goTo(target: BaseItemDto | null) {
+		if (!target) return;
 		clearCountdown();
 		showCountdown = false;
 		reportStopped();
-		goto(resolve(`/tv/${seriesId}/play/${nextEpisode.Id}?autoplay=1`));
+		goto(resolve(`/tv/${seriesId}/play/${target.Id}?autoplay=1`));
+	}
+
+	function goToNext() {
+		goTo(nextEpisode);
+	}
+
+	function goToPrevious() {
+		goTo(previousEpisode);
 	}
 
 	function sendProgress() {
@@ -179,6 +266,8 @@
 	});
 </script>
 
+<svelte:window onfullscreenchange={onFullscreenChange} />
+
 {#if loading}
 	<p>Loading…</p>
 {:else if error}
@@ -192,10 +281,9 @@
 			This video couldn't be played. It may be in an unsupported format (H.264/AAC MP4 is required).
 		</p>
 	{:else}
-		<div class="player">
+		<div class="player" bind:this={playerEl}>
 			<!-- svelte-ignore a11y_media_has_caption -->
 			<video
-				controls
 				{autoplay}
 				src={streamSrc}
 				bind:this={video}
@@ -206,9 +294,85 @@
 				onended={onEnded}
 				onerror={() => (playbackError = true)}
 			></video>
-			{#if nextEpisode}
-				<button class="next" type="button" onclick={goToNext}>Next Episode</button>
-			{/if}
+
+			<div class="controls">
+				{#if neighbors}
+					<button
+						class="icon"
+						type="button"
+						aria-label="Previous episode"
+						disabled={!previousEpisode}
+						onclick={goToPrevious}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M6 5h2v14H6z" />
+							<path d="M20 5v14L9 12z" />
+						</svg>
+					</button>
+				{/if}
+
+				<button
+					class="icon"
+					type="button"
+					aria-label={isPlaying ? 'Pause' : 'Play'}
+					onclick={togglePlay}
+				>
+					{#if isPlaying}
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M7 5h4v14H7z" />
+							<path d="M13 5h4v14h-4z" />
+						</svg>
+					{:else}
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					{/if}
+				</button>
+
+				{#if neighbors}
+					<button
+						class="icon"
+						type="button"
+						aria-label="Next episode"
+						disabled={!nextEpisode}
+						onclick={goToNext}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M4 5v14l11-7z" />
+							<path d="M18 5h2v14h-2z" />
+						</svg>
+					</button>
+				{/if}
+
+				<span class="time">{formatTime(scrubValue ?? currentTime)}</span>
+				<input
+					class="seek"
+					type="range"
+					aria-label="Seek"
+					min="0"
+					max={duration || 0}
+					step="0.1"
+					value={scrubValue ?? currentTime}
+					oninput={onSeekInput}
+					onchange={onSeekCommit}
+				/>
+				<span class="time">{formatTime(duration)}</span>
+
+				<button
+					class="icon"
+					type="button"
+					aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+					onclick={toggleFullscreen}
+				>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M4 4h6v2H6v4H4z" />
+						<path d="M20 4v6h-2V6h-4V4z" />
+						<path d="M4 20v-6h2v4h4v2z" />
+						<path d="M20 20h-6v-2h4v-4h2z" />
+					</svg>
+				</button>
+			</div>
+
 			{#if showCountdown && nextEpisode}
 				<div class="countdown" role="dialog" aria-label="Next episode">
 					<p>Next episode in {countdownRemaining}s</p>
@@ -234,16 +398,60 @@
 		max-width: 60rem;
 	}
 
-	.next {
+	video {
+		display: block;
+		width: 100%;
+		max-height: 70vh;
+		background-color: #000;
+		border-radius: 0.5rem;
+	}
+
+	.controls {
 		position: absolute;
-		top: 1rem;
-		right: 1rem;
-		padding: 0.5rem 0.875rem;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		background-color: rgba(0, 0, 0, 0.65);
+		color: #fff;
+		border-bottom-left-radius: 0.5rem;
+		border-bottom-right-radius: 0.5rem;
+	}
+
+	.icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.25rem;
 		border: none;
-		border-radius: 0.375rem;
-		background-color: rgba(0, 0, 0, 0.7);
+		background: none;
 		color: #fff;
 		cursor: pointer;
+	}
+
+	.icon:disabled {
+		opacity: 0.35;
+		cursor: default;
+	}
+
+	.icon svg {
+		width: 1.5rem;
+		height: 1.5rem;
+		fill: currentColor;
+	}
+
+	.time {
+		font-variant-numeric: tabular-nums;
+		font-size: 0.8125rem;
+		white-space: nowrap;
+	}
+
+	.seek {
+		flex: 1;
+		min-width: 4rem;
 	}
 
 	.countdown {
@@ -257,6 +465,7 @@
 		background-color: rgba(0, 0, 0, 0.75);
 		color: #fff;
 		text-align: center;
+		border-radius: 0.5rem;
 	}
 
 	.countdown-actions {
@@ -269,13 +478,6 @@
 		border: none;
 		border-radius: 0.375rem;
 		cursor: pointer;
-	}
-
-	video {
-		width: 100%;
-		max-height: 70vh;
-		background-color: #000;
-		border-radius: 0.5rem;
 	}
 
 	.error {
