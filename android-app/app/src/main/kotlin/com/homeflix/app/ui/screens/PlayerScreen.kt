@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +55,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlayerScreen(
     onBack: () -> Unit,
-    onPlayNext: (String) -> Unit,
+    onPlayEpisode: (String) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory)
@@ -102,8 +104,10 @@ fun PlayerScreen(
                 VideoPlayer(
                     streamUrl = state.stream.url,
                     resumeTicks = state.resumeTicks,
+                    isEpisode = state.isEpisode,
+                    previousEpisode = state.previousEpisode,
                     nextEpisode = state.nextEpisode,
-                    onPlayNext = onPlayNext,
+                    onPlayEpisode = onPlayEpisode,
                     onReportStarted = viewModel::reportStarted,
                     onReportProgress = viewModel::reportProgress,
                     onReportStopped = viewModel::reportStopped,
@@ -118,8 +122,10 @@ fun PlayerScreen(
 private fun VideoPlayer(
     streamUrl: String,
     resumeTicks: Long,
+    isEpisode: Boolean,
+    previousEpisode: PlayerViewModel.EpisodeRef?,
     nextEpisode: PlayerViewModel.EpisodeRef?,
-    onPlayNext: (String) -> Unit,
+    onPlayEpisode: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
     onReportProgress: (Long, Boolean) -> Unit,
     onReportStopped: (Long) -> Unit,
@@ -225,7 +231,7 @@ private fun VideoPlayer(
                 countdownRemaining -= 1
             }
             showCountdown = false
-            onPlayNext(next.id)
+            onPlayEpisode(next.id)
         }
     }
 
@@ -258,6 +264,19 @@ private fun VideoPlayer(
                     .padding(horizontal = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isEpisode) {
+                        IconButton(
+                            onClick = { previousEpisode?.let { onPlayEpisode(it.id) } },
+                            enabled = previousEpisode != null
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.SkipPrevious,
+                                contentDescription = "Previous episode",
+                                tint = if (previousEpisode != null) Color.White else Color.White.copy(alpha = 0.3f)
+                            )
+                        }
+                    }
+
                     IconButton(
                         onClick = {
                             if (player.playbackState == Player.STATE_ENDED) {
@@ -273,6 +292,19 @@ private fun VideoPlayer(
                             contentDescription = if (isPlaying) "Pause" else "Play",
                             tint = Color.White
                         )
+                    }
+
+                    if (isEpisode) {
+                        IconButton(
+                            onClick = { nextEpisode?.let { onPlayEpisode(it.id) } },
+                            enabled = nextEpisode != null
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.SkipNext,
+                                contentDescription = "Next episode",
+                                tint = if (nextEpisode != null) Color.White else Color.White.copy(alpha = 0.3f)
+                            )
+                        }
                     }
 
                     Text(
@@ -301,12 +333,6 @@ private fun VideoPlayer(
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
-
-                    if (nextEpisode != null) {
-                        TextButton(onClick = { onPlayNext(nextEpisode.id) }) {
-                            Text("Next Episode", color = Color.White)
-                        }
-                    }
                 }
             }
 
@@ -328,7 +354,7 @@ private fun VideoPlayer(
                         TextButton(onClick = { showCountdown = false }) {
                             Text("Cancel")
                         }
-                        TextButton(onClick = { onPlayNext(nextEpisode.id) }) {
+                        TextButton(onClick = { onPlayEpisode(nextEpisode.id) }) {
                             Text("Play Now")
                         }
                     }
