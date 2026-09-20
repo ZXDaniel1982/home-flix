@@ -130,7 +130,7 @@ export async function getEpisodeNeighbors(episode: BaseItemDto): Promise<Episode
 
 - Replace `getNextEpisode(itemId)` with `getAdjacentEpisodes(itemId): AdjacentEpisodes?`, where
   `data class AdjacentEpisodes(val previous: BaseItemDto?, val next: BaseItemDto?)`.
-- Returns `null` for a non-Episode or an item missing `seriesId`/`seasonId`; otherwise an `AdjacentEpisodes` whose fields may individually be `null`.
+- Returns `null` for a non-Episode. For an Episode it always returns an `AdjacentEpisodes` (each field is `null` when `seasonId` is missing or there is no neighbor), so the UI can show disabled controls rather than hiding them.
 - Implementation: `getMovie(itemId)`, guard Episode, `getEpisodes(seasonId)`, then the two helpers. No `getSeasons`.
 
 ### 6.2 ViewModel
