@@ -8,7 +8,7 @@ x-logging: &default-logging
 
 services:
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.11.4-alpine
     container_name: caddy
     restart: unless-stopped
     depends_on:
@@ -38,7 +38,7 @@ services:
       - media-net
 
   jellyfin:
-    image: jellyfin/jellyfin:latest
+    image: jellyfin/jellyfin:10.11.11
     container_name: jellyfin
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
