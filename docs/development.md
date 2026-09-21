@@ -251,13 +251,50 @@ Caddy serves Jellyfin under the `/api` path. After Jellyfin starts, set its base
 
 ### 7.5 Update Services
 
-When the code or configuration changes:
+Container images are pinned to explicit versions in `docker/docker-compose.yml`
+(`jellyfin/jellyfin:10.11.11`, `caddy:2.11.4-alpine`). Routine `docker compose pull`
+therefore stays on the pinned versions; upgrading is a deliberate tag bump.
+
+**Code or config changes (no image change):**
 
 ```bash
 git pull
-docker compose pull
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
+
+**Updating a container image:** review the upstream release notes, then:
+
+```bash
+# 1. Back up Jellyfin's config first. A major upgrade migrates the database, and
+#    rolling the image back does NOT roll the database back.
+scripts/backup-jellyfin.sh
+
+# 2. Note the current images so you can roll back.
+docker image ls | grep -E 'jellyfin|caddy'
+
+# 3. Edit docker/docker-compose.yml to the new tags, then:
+docker compose -f docker/docker-compose.yml pull
+docker compose -f docker/docker-compose.yml up -d
+
+# 4. Check health, then verify playback on web and Android.
+docker compose -f docker/docker-compose.yml ps
+```
+
+Rollback: restore the previous tag in the compose file and `up -d` (the old image
+is still local). If Jellyfin already migrated its database, restore the config
+backup from `scripts/backup-jellyfin.sh`.
+
+**Cadence and automation:**
+
+- Review updates **monthly–quarterly**. Caddy is stateless and low-risk to update
+  at any time; Jellyfin needs the backup-and-verify path above.
+- Do **not** run an auto-updater (e.g. Watchtower) for Jellyfin — it can pull a
+  major version and migrate the database with no backup. Limit any automation to
+  Caddy, or run the updater in monitor-only mode.
+- Keep Docker Engine and the OS patched as well:
+  `sudo apt update && sudo apt upgrade`.
+- Reclaim disk with `docker image prune` / `docker container prune` — **never**
+  `volume prune` (Caddy's certificates live in named volumes).
 
 ---
 

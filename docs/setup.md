@@ -107,9 +107,12 @@ The compose file also applies production defaults: container logs are rotated
 
 Caddy waits for Jellyfin to report healthy before starting
 (`depends_on: service_healthy`). If Jellyfin cannot become healthy, Caddy will
-not start, so the frontend is unavailable too. The Jellyfin image is
-`jellyfin/jellyfin:latest`; pin it to a known-good tag if you want to avoid a
-future `latest` update changing that health contract.
+not start, so the frontend is unavailable too.
+
+Container images are **pinned to explicit versions** in `docker/docker-compose.yml`
+(`jellyfin/jellyfin:10.11.11`, `caddy:2.11.4-alpine`), so a routine
+`docker compose pull` cannot silently jump a major version. See
+`docs/development.md` §7.5 for the update procedure.
 
 > **Upgrading from an earlier compose file:** this file sets `name: home-flix`,
 > while older deployments were created under the auto-derived project name
