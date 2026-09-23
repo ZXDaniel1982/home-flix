@@ -717,7 +717,7 @@ Replace the entire contents of `web-frontend/src/lib/components/VideoPlayer.svel
 Run (from `web-frontend/`): `npm run check && npm run lint && npm run build && npm test`
 Expected: all pass. (In particular, no `a11y` lint errors from the custom controls.)
 
-- [ ] **Step 3: Manual verification (deferred if no server)**
+- [x] **Step 3: Manual verification (deferred if no server)**
 
 If a Jellyfin server is reachable, run `npm run dev` and verify: first episode of a season (prev greyed), middle episode (both active), last episode of a season (next greyed and no countdown at the end), single-episode season (both greyed), a movie (no prev/next), prev/next navigation, play/pause, seek, and fullscreen. If no server is available in this environment, record that this was deferred to the human.
 
@@ -1237,7 +1237,7 @@ In `android-app/app/src/main/kotlin/com/homeflix/app/navigation/AppNavHost.kt`, 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 8: Manual verification (deferred if no device)**
+- [x] **Step 8: Manual verification (deferred if no device)**
 
 Install the APK on the Windows emulator per `docs/development.md` §6.4 and verify: first/last episode of a season (one button greyed), middle (both active), single-episode season (both greyed), movie (no prev/next), prev/next navigation, and that the countdown does not appear at a season finale. Record if this is deferred to the human.
 
