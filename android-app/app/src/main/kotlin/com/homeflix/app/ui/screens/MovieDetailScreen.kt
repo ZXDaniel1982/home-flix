@@ -107,7 +107,8 @@ private fun MovieDetailContent(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth(0.5f)
                 .aspectRatio(2f / 3f)
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
