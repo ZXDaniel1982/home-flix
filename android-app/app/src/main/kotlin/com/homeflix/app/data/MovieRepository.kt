@@ -2,7 +2,9 @@ package com.homeflix.app.data
 
 import java.util.UUID
 import java.nio.charset.StandardCharsets
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.mediaInfoApi
 import org.jellyfin.sdk.api.client.extensions.playStateApi
@@ -101,23 +103,33 @@ class JellyfinMovieRepository(
     private val sessionRepository: SessionRepository
 ) : MovieRepository {
 
+    /**
+     * The Jellyfin SDK reads the HTTP response body on the caller's dispatcher after
+     * resuming from OkHttp's async call. Running SDK calls on [Dispatchers.IO] keeps
+     * that read off the main thread (otherwise Android throws
+     * NetworkOnMainThreadException for larger/gzipped responses).
+     */
+    private suspend fun <T> onIo(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
+
     override suspend fun getMovies(startIndex: Int, limit: Int): List<BaseItemDto> {
         val baseUrl = settingsRepository.serverUrl.first().orEmpty()
         val session = sessionRepository.session.first()
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getItems(
-            GetItemsRequest(
-                userId = UUID.fromString(session.userId),
-                startIndex = startIndex,
-                limit = limit,
-                recursive = true,
-                includeItemTypes = listOf(BaseItemKind.MOVIE),
-                sortBy = listOf(ItemSortBy.SORT_NAME),
-                sortOrder = listOf(SortOrder.ASCENDING)
+        val response = onIo {
+            api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    startIndex = startIndex,
+                    limit = limit,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.MOVIE),
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                    sortOrder = listOf(SortOrder.ASCENDING)
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -127,10 +139,12 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        return api.userLibraryApi.getItem(
-            userId = UUID.fromString(session.userId),
-            itemId = UUID.fromString(itemId)
-        ).content
+        return onIo {
+            api.userLibraryApi.getItem(
+                userId = UUID.fromString(session.userId),
+                itemId = UUID.fromString(itemId)
+            ).content
+        }
     }
 
     override suspend fun getTvSeries(startIndex: Int, limit: Int): List<BaseItemDto> {
@@ -139,17 +153,19 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getItems(
-            GetItemsRequest(
-                userId = UUID.fromString(session.userId),
-                startIndex = startIndex,
-                limit = limit,
-                recursive = true,
-                includeItemTypes = listOf(BaseItemKind.SERIES),
-                sortBy = listOf(ItemSortBy.SORT_NAME),
-                sortOrder = listOf(SortOrder.ASCENDING)
+        val response = onIo {
+            api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    startIndex = startIndex,
+                    limit = limit,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.SERIES),
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                    sortOrder = listOf(SortOrder.ASCENDING)
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -159,15 +175,17 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getItems(
-            GetItemsRequest(
-                userId = UUID.fromString(session.userId),
-                parentId = UUID.fromString(seriesId),
-                includeItemTypes = listOf(BaseItemKind.SEASON),
-                sortBy = listOf(ItemSortBy.INDEX_NUMBER),
-                limit = 100
+        val response = onIo {
+            api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    parentId = UUID.fromString(seriesId),
+                    includeItemTypes = listOf(BaseItemKind.SEASON),
+                    sortBy = listOf(ItemSortBy.INDEX_NUMBER),
+                    limit = 100
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -177,15 +195,17 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getItems(
-            GetItemsRequest(
-                userId = UUID.fromString(session.userId),
-                parentId = UUID.fromString(seasonId),
-                includeItemTypes = listOf(BaseItemKind.EPISODE),
-                sortBy = listOf(ItemSortBy.INDEX_NUMBER),
-                limit = 500
+        val response = onIo {
+            api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    parentId = UUID.fromString(seasonId),
+                    includeItemTypes = listOf(BaseItemKind.EPISODE),
+                    sortBy = listOf(ItemSortBy.INDEX_NUMBER),
+                    limit = 500
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -206,16 +226,18 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getItems(
-            GetItemsRequest(
-                userId = UUID.fromString(session.userId),
-                searchTerm = query,
-                recursive = true,
-                includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
-                sortBy = listOf(ItemSortBy.SORT_NAME),
-                limit = limit
+        val response = onIo {
+            api.itemsApi.getItems(
+                GetItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    searchTerm = query,
+                    recursive = true,
+                    includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
+                    sortBy = listOf(ItemSortBy.SORT_NAME),
+                    limit = limit
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -225,13 +247,15 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.itemsApi.getResumeItems(
-            GetResumeItemsRequest(
-                userId = UUID.fromString(session.userId),
-                includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.EPISODE),
-                limit = limit
+        val response = onIo {
+            api.itemsApi.getResumeItems(
+                GetResumeItemsRequest(
+                    userId = UUID.fromString(session.userId),
+                    includeItemTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.EPISODE),
+                    limit = limit
+                )
             )
-        )
+        }
         return response.content.items.orEmpty()
     }
 
@@ -249,10 +273,12 @@ class JellyfinMovieRepository(
             ?: throw IllegalStateException("Not authenticated")
 
         val api = jellyfinProvider.createApi(baseUrl, accessToken = session.accessToken)
-        val response = api.mediaInfoApi.getPostedPlaybackInfo(
-            UUID.fromString(itemId),
-            PlaybackInfoDto()
-        )
+        val response = onIo {
+            api.mediaInfoApi.getPostedPlaybackInfo(
+                UUID.fromString(itemId),
+                PlaybackInfoDto()
+            )
+        }
         val sources = response.content.mediaSources.orEmpty()
         val source = sources.firstOrNull { it.supportsDirectPlay } ?: sources.firstOrNull()
             ?: throw IllegalStateException("No playable media source")
@@ -267,19 +293,21 @@ class JellyfinMovieRepository(
 
     override suspend fun reportPlaybackStarted(itemId: String, mediaSourceId: String, positionTicks: Long) {
         val api = authenticatedApi()
-        api.playStateApi.reportPlaybackStart(
-            PlaybackStartInfo(
-                itemId = UUID.fromString(itemId),
-                mediaSourceId = mediaSourceId,
-                positionTicks = positionTicks,
-                playMethod = PlayMethod.DIRECT_PLAY,
-                canSeek = true,
-                isPaused = false,
-                isMuted = false,
-                repeatMode = RepeatMode.REPEAT_NONE,
-                playbackOrder = PlaybackOrder.DEFAULT
+        onIo {
+            api.playStateApi.reportPlaybackStart(
+                PlaybackStartInfo(
+                    itemId = UUID.fromString(itemId),
+                    mediaSourceId = mediaSourceId,
+                    positionTicks = positionTicks,
+                    playMethod = PlayMethod.DIRECT_PLAY,
+                    canSeek = true,
+                    isPaused = false,
+                    isMuted = false,
+                    repeatMode = RepeatMode.REPEAT_NONE,
+                    playbackOrder = PlaybackOrder.DEFAULT
+                )
             )
-        )
+        }
     }
 
     override suspend fun reportPlaybackProgress(
@@ -289,31 +317,35 @@ class JellyfinMovieRepository(
         isPaused: Boolean
     ) {
         val api = authenticatedApi()
-        api.playStateApi.reportPlaybackProgress(
-            PlaybackProgressInfo(
-                itemId = UUID.fromString(itemId),
-                mediaSourceId = mediaSourceId,
-                positionTicks = positionTicks,
-                playMethod = PlayMethod.DIRECT_PLAY,
-                canSeek = true,
-                isPaused = isPaused,
-                isMuted = false,
-                repeatMode = RepeatMode.REPEAT_NONE,
-                playbackOrder = PlaybackOrder.DEFAULT
+        onIo {
+            api.playStateApi.reportPlaybackProgress(
+                PlaybackProgressInfo(
+                    itemId = UUID.fromString(itemId),
+                    mediaSourceId = mediaSourceId,
+                    positionTicks = positionTicks,
+                    playMethod = PlayMethod.DIRECT_PLAY,
+                    canSeek = true,
+                    isPaused = isPaused,
+                    isMuted = false,
+                    repeatMode = RepeatMode.REPEAT_NONE,
+                    playbackOrder = PlaybackOrder.DEFAULT
+                )
             )
-        )
+        }
     }
 
     override suspend fun reportPlaybackStopped(itemId: String, mediaSourceId: String, positionTicks: Long) {
         val api = authenticatedApi()
-        api.playStateApi.reportPlaybackStopped(
-            PlaybackStopInfo(
-                itemId = UUID.fromString(itemId),
-                mediaSourceId = mediaSourceId,
-                positionTicks = positionTicks,
-                failed = false
+        onIo {
+            api.playStateApi.reportPlaybackStopped(
+                PlaybackStopInfo(
+                    itemId = UUID.fromString(itemId),
+                    mediaSourceId = mediaSourceId,
+                    positionTicks = positionTicks,
+                    failed = false
+                )
             )
-        )
+        }
     }
 
     private suspend fun authenticatedApi() = jellyfinProvider.createApi(

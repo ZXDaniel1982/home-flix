@@ -1,5 +1,7 @@
 package com.homeflix.app.data
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.api.client.extensions.authenticateUserByName
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.model.api.AuthenticationResult
@@ -16,6 +18,9 @@ class JellyfinAuthService(private val jellyfinProvider: JellyfinProvider) : Auth
         password: String
     ): AuthenticationResult {
         val api = jellyfinProvider.createApi(baseUrl = baseUrl)
-        return api.userApi.authenticateUserByName(username = username, password = password).content
+        // The SDK reads the response body on the caller's dispatcher; keep it off the main thread.
+        return withContext(Dispatchers.IO) {
+            api.userApi.authenticateUserByName(username = username, password = password).content
+        }
     }
 }
