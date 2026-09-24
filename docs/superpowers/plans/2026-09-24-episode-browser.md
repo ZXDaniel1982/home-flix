@@ -50,7 +50,7 @@
 - Consumes: existing `getSeasons(seriesId)`, `getEpisodes(seasonId)`.
 - Produces: `SeasonEpisodes { season: BaseItemDto; episodes: BaseItemDto[] }` and `getSeriesEpisodes(seriesId: string): Promise<SeasonEpisodes[]>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `web-frontend/src/lib/api/items.test.ts`, change the import on line 2 to:
 
@@ -131,12 +131,12 @@ describe('getSeriesEpisodes', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: FAIL — `getSeriesEpisodes` is not exported.
 
-- [ ] **Step 3: Implement `getSeriesEpisodes`**
+- [x] **Step 3: Implement `getSeriesEpisodes`**
 
 In `web-frontend/src/lib/api/items.ts`, add after `getEpisodeNeighbors` (after line 83):
 
@@ -157,17 +157,17 @@ export async function getSeriesEpisodes(seriesId: string): Promise<SeasonEpisode
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run (from `web-frontend/`): `npm test -- src/lib/api/items.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Type check, lint, full tests**
+- [x] **Step 5: Type check, lint, full tests**
 
 Run (from `web-frontend/`): `npm run check && npm run lint && npm test`
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web-frontend/src/lib/api/items.ts web-frontend/src/lib/api/items.test.ts
@@ -185,7 +185,7 @@ git commit -m "feat(web): add getSeriesEpisodes API"
 - Consumes: `getSeriesEpisodes` / `SeasonEpisodes` (Task 1), existing `goTo()`, `cancelCountdown()`, `neighbors`, `itemId`, `seriesId`.
 - Produces: nothing used by later tasks.
 
-- [ ] **Step 1: Update the import**
+- [x] **Step 1: Update the import**
 
 In `web-frontend/src/lib/components/VideoPlayer.svelte`, replace line 11:
 
@@ -205,7 +205,7 @@ with:
 	} from '$lib/api/items';
 ```
 
-- [ ] **Step 2: Add state**
+- [x] **Step 2: Add state**
 
 After the line `let countdownRemaining = $state(COUNTDOWN_SECONDS);`, add:
 
@@ -216,7 +216,7 @@ After the line `let countdownRemaining = $state(COUNTDOWN_SECONDS);`, add:
 	let seasons = $state<SeasonEpisodes[]>([]);
 ```
 
-- [ ] **Step 3: Reset the panel state on item change**
+- [x] **Step 3: Reset the panel state on item change**
 
 In the load `$effect`'s reset block, after `scrubValue = null;`, add:
 
@@ -227,7 +227,7 @@ In the load `$effect`'s reset block, after `scrubValue = null;`, add:
 		seasons = [];
 ```
 
-- [ ] **Step 4: Add the panel functions**
+- [x] **Step 4: Add the panel functions**
 
 After `function goToPrevious() { ... }`, add:
 
@@ -277,7 +277,7 @@ After `function goToPrevious() { ... }`, add:
 	}
 ```
 
-- [ ] **Step 5: Add the Escape handler to the window**
+- [x] **Step 5: Add the Escape handler to the window**
 
 Replace `<svelte:window onfullscreenchange={onFullscreenChange} />` with:
 
@@ -285,7 +285,7 @@ Replace `<svelte:window onfullscreenchange={onFullscreenChange} />` with:
 <svelte:window onfullscreenchange={onFullscreenChange} onkeydown={onKeydown} />
 ```
 
-- [ ] **Step 6: Add the episodes button to the control bar**
+- [x] **Step 6: Add the episodes button to the control bar**
 
 After the `Next episode` button block (`{/if}` following the next button, at line 345) and before `<span class="time">`, add:
 
@@ -304,7 +304,7 @@ After the `Next episode` button block (`{/if}` following the next button, at lin
 				{/if}
 ```
 
-- [ ] **Step 7: Add the panel markup**
+- [x] **Step 7: Add the panel markup**
 
 After the countdown block (`{/if}` at line 384) and before the closing `</div>` of `.player`, add:
 
@@ -357,7 +357,7 @@ After the countdown block (`{/if}` at line 384) and before the closing `</div>` 
 			{/if}
 ```
 
-- [ ] **Step 8: Add styles**
+- [x] **Step 8: Add styles**
 
 In the `<style>` block, after the `.countdown-actions button` rule, add:
 
@@ -461,7 +461,7 @@ Expected: all pass.
 
 Manual (deferred if no server): from an episode, open Episodes; confirm seasons/episodes and the highlighted current episode; select another → plays and panel closes; Retry after failure; Escape/outside-click/close dismiss; a movie shows no Episodes button.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add web-frontend/src/lib/components/VideoPlayer.svelte
@@ -486,7 +486,7 @@ git commit -m "feat(web): episode browser panel in the player"
   - `FakeMovieRepository.seriesEpisodes` / `.seriesEpisodesError` / `.seriesEpisodesCalls`
   - `PlayerViewModel.EpisodesState` + `episodesState: StateFlow<EpisodesState>` + `loadEpisodes()` + `playingItemId: String`
 
-- [ ] **Step 1: Add `SeasonEpisodes` and the repository method**
+- [x] **Step 1: Add `SeasonEpisodes` and the repository method**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt`:
 
@@ -522,7 +522,7 @@ Add to `JellyfinMovieRepository` after the `getAdjacentEpisodes` override:
     }
 ```
 
-- [ ] **Step 2: Update `FakeMovieRepository`**
+- [x] **Step 2: Update `FakeMovieRepository`**
 
 In `android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt`:
 
@@ -547,7 +547,7 @@ Add the override after `getAdjacentEpisodes`:
     }
 ```
 
-- [ ] **Step 3: Add the ViewModel state and loader**
+- [x] **Step 3: Add the ViewModel state and loader**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt`:
 
@@ -615,7 +615,7 @@ Add after `load()`:
     }
 ```
 
-- [ ] **Step 4: Write the ViewModel tests**
+- [x] **Step 4: Write the ViewModel tests**
 
 In `android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt`, add the imports `com.homeflix.app.data.SeasonEpisodes` and `org.jellyfin.sdk.model.api.BaseItemKind` (if not present) and append:
 
@@ -693,12 +693,12 @@ In `android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt`, ad
     }
 ```
 
-- [ ] **Step 5: Run the Android unit tests**
+- [x] **Step 5: Run the Android unit tests**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all tests pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/data/MovieRepository.kt android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerViewModel.kt android-app/app/src/test/kotlin/com/homeflix/app/TestDoubles.kt android-app/app/src/test/kotlin/com/homeflix/app/PlayerViewModelTest.kt
@@ -716,7 +716,7 @@ git commit -m "feat(android): series episodes data and player episode state"
 - Consumes: `PlayerViewModel.EpisodesState`, `episodesState`, `loadEpisodes`, `playingItemId` from Task 3.
 - Produces: nothing used later.
 
-- [ ] **Step 1: Add imports**
+- [x] **Step 1: Add imports**
 
 In `android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt`, add:
 
@@ -730,7 +730,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 ```
 
-- [ ] **Step 2: Pass the new values into `VideoPlayer`**
+- [x] **Step 2: Pass the new values into `VideoPlayer`**
 
 In the `PlayerViewModel.UiState.Success` branch, change the `VideoPlayer(...)` call to add:
 
@@ -743,7 +743,7 @@ In the `PlayerViewModel.UiState.Success` branch, change the `VideoPlayer(...)` c
 
 (The existing `previousEpisode`, `nextEpisode`, `onPlayEpisode`, report callbacks and `modifier` stay.)
 
-- [ ] **Step 3: Extend the private `VideoPlayer` signature**
+- [x] **Step 3: Extend the private `VideoPlayer` signature**
 
 Change the private composable signature to (and add the Material3 opt-in, since the sheet is experimental):
 
@@ -767,7 +767,7 @@ private fun VideoPlayer(
 )
 ```
 
-- [ ] **Step 4: Add sheet state**
+- [x] **Step 4: Add sheet state**
 
 Next to the other `remember(streamUrl)` state, add:
 
@@ -776,7 +776,7 @@ Next to the other `remember(streamUrl)` state, add:
     val episodesSheetState = rememberModalBottomSheetState()
 ```
 
-- [ ] **Step 5: Add the episodes button**
+- [x] **Step 5: Add the episodes button**
 
 In the controls `Row`, after the `SkipNext` `IconButton` block (`}` closing the `if (isEpisode)` that wraps it), add:
 
@@ -797,7 +797,7 @@ In the controls `Row`, after the `SkipNext` `IconButton` block (`}` closing the 
                     }
 ```
 
-- [ ] **Step 6: Add the bottom sheet**
+- [x] **Step 6: Add the bottom sheet**
 
 After the countdown overlay block, still inside the outer `Box`, add:
 
@@ -879,7 +879,7 @@ After the countdown overlay block, still inside the outer `Box`, add:
             }
 ```
 
-- [ ] **Step 7: Compile and run tests**
+- [x] **Step 7: Compile and run tests**
 
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
@@ -888,7 +888,7 @@ Expected: BUILD SUCCESSFUL.
 
 Install on Windows/MuMu and verify: from an episode, tap the Episodes button; seasons/episodes appear and the current episode is highlighted; selecting another plays it and closes the sheet; a movie shows no Episodes button; Android Back closes the sheet.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add android-app/app/src/main/kotlin/com/homeflix/app/ui/screens/PlayerScreen.kt

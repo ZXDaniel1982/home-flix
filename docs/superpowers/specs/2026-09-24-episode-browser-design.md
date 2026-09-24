@@ -1,7 +1,7 @@
 # Design — Episode Browser During Playback
 
 **Date:** 2026-09-24
-**Status:** Draft (awaiting review)
+**Status:** Accepted
 **Scope:** New player affordance in both clients (web frontend + Android app). Builds on the player work from 2026-09-18/2026-09-20.
 
 ## 1. Context
