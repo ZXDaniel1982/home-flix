@@ -240,4 +240,21 @@ class PlayerViewModelTest {
 
         assertTrue(viewModel.episodesState.value is PlayerViewModel.EpisodesState.Error)
     }
+
+    @Test
+    fun loadEpisodes_401_emitsUnauthorizedAndSetsError() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            seriesEpisodesError = InvalidStatusException(401)
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+
+        assertEquals(Unit, viewModel.unauthorizedEvents.first())
+        assertTrue(viewModel.episodesState.value is PlayerViewModel.EpisodesState.Error)
+    }
 }
