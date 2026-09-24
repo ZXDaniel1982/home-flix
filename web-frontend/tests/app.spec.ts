@@ -124,14 +124,6 @@ test('browse episodes and switch to another episode', async ({ page }) => {
 			if (
 				method === 'GET' &&
 				/^\/api\/Users\/[^/]+\/Items$/.test(path) &&
-				params.get('IncludeItemTypes') === 'Season'
-			) {
-				return ok({ Items: [{ Id: 's1', Name: 'Season 1', IndexNumber: 1 }] });
-			}
-
-			if (
-				method === 'GET' &&
-				/^\/api\/Users\/[^/]+\/Items$/.test(path) &&
 				params.get('ParentId') === 's1' &&
 				params.get('IncludeItemTypes') === 'Episode'
 			) {
@@ -206,7 +198,106 @@ test('browse episodes and switch to another episode', async ({ page }) => {
 	await expect(dialog.getByText('Episode 2')).toBeVisible();
 	await expect(dialog.getByRole('button', { name: /Episode 1/ })).toBeDisabled();
 
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+	await page.getByRole('button', { name: 'Episodes' }).click();
+	await expect(dialog).toBeVisible();
+
 	await dialog.getByRole('button', { name: /Episode 2/ }).click();
 
 	await expect(page).toHaveURL(/\/play\/e2(\?|$)/);
+});
+
+test('a movie shows no Episodes button', async ({ page }) => {
+	await mockJellyfin(page);
+	await page.route(
+		(url) => /\/api\/Videos\/[^/]+\/stream$/.test(url.pathname),
+		// Leave the media request pending so the control bar renders instead of
+		// the playback-error message.
+		() => {}
+	);
+
+	await page.goto('/');
+	await expect(page).toHaveURL(/\/login$/);
+
+	await page.locator('input[name="username"]').fill('alice');
+	await page.locator('input[name="password"]').fill('pw');
+	await page.getByRole('button', { name: 'Sign in' }).click();
+
+	await expect(page.getByRole('heading', { level: 1, name: 'Home Flix' })).toBeVisible();
+
+	await page.getByRole('link', { name: 'Movies' }).click();
+	await page.getByRole('link', { name: 'Frozen' }).click();
+	await page.getByRole('link', { name: 'Play' }).click();
+
+	await expect(page).toHaveURL(new RegExp(`/movies/${MOVIE_ID}/play$`));
+	await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Episodes' })).toHaveCount(0);
+});
+
+test('episode list shows an error and Retry when the fetch fails', async ({ page }) => {
+	await page.route(
+		(url) => url.pathname.startsWith('/api/'),
+		(route) => {
+			const request = route.request();
+			const url = new URL(request.url());
+			const path = url.pathname;
+			const method = request.method();
+			const params = url.searchParams;
+
+			const ok = (body: unknown) => route.fulfill({ json: body });
+
+			if (
+				method === 'GET' &&
+				/^\/api\/Users\/[^/]+\/Items$/.test(path) &&
+				params.get('ParentId') === 's1' &&
+				params.get('IncludeItemTypes') === 'Episode'
+			) {
+				return route.fulfill({ status: 500, json: {} });
+			}
+
+			const itemMatch = path.match(/^\/api\/Users\/[^/]+\/Items\/([^/]+)$/);
+			if (method === 'GET' && itemMatch) {
+				return ok({
+					Id: itemMatch[1],
+					Name: 'Episode 1',
+					Type: 'Episode',
+					SeriesId: 'series-1',
+					SeasonId: 's1',
+					ParentIndexNumber: 1,
+					IndexNumber: 1,
+					UserData: { PlaybackPositionTicks: 0 }
+				});
+			}
+
+			if (method === 'POST' && /^\/api\/Items\/[^/]+\/PlaybackInfo$/.test(path)) {
+				return ok({ MediaSources: [{ Id: 'ms-1', Container: 'mp4', SupportsDirectPlay: true }] });
+			}
+
+			if (method === 'GET' && /^\/api\/Videos\/[^/]+\/stream$/.test(path)) {
+				// Leave the media request pending so the control bar renders instead of
+				// the playback-error message.
+				return;
+			}
+
+			if (method === 'POST' && /^\/api\/Sessions\/Playing/.test(path)) {
+				return route.fulfill({ status: 204, body: '' });
+			}
+
+			return route.fulfill({ status: 404, json: {} });
+		}
+	);
+	await page.addInitScript(() => {
+		localStorage.setItem('home-flix-token', 'test-token');
+		localStorage.setItem('home-flix-user', JSON.stringify({ Id: 'user-1', Name: 'Alice' }));
+	});
+
+	await page.goto('/tv/series-1/play/e1');
+
+	await page.getByRole('button', { name: 'Episodes' }).click();
+
+	const dialog = page.getByRole('dialog', { name: 'Episodes' });
+	await expect(dialog).toBeVisible();
+	await expect(dialog.getByText('Could not load episodes.')).toBeVisible();
+	await expect(dialog.getByRole('button', { name: 'Retry' })).toBeVisible();
 });
