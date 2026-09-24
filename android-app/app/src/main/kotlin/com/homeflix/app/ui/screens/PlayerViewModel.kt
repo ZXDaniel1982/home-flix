@@ -126,8 +126,8 @@ class PlayerViewModel(
             _episodesState.value = EpisodesState.Error("This item has no series.")
             return
         }
+        _episodesState.value = EpisodesState.Loading
         viewModelScope.launch {
-            _episodesState.value = EpisodesState.Loading
             try {
                 val seasons = movieRepository.getSeriesEpisodes(seriesId)
                 _episodesState.value = EpisodesState.Loaded(seasons)
