@@ -1,6 +1,8 @@
 # Episode Browser Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Revised 2026-09-24:** the shipped implementation lists only the **current season's** episodes using the existing `getEpisodes(seasonId)`. The `getSeriesEpisodes` / `SeasonEpisodes` design in Tasks 1 and 3 below is historical and was removed; the binding authority is `docs/superpowers/specs/2026-09-24-episode-browser-design.md`. Treat Tasks 1 and 3's API steps as superseded.
 
 **Goal:** Add an episodes button to both players that opens a season-grouped list of the series and lets the user play any episode.
 
@@ -454,7 +456,7 @@ In the `<style>` block, after the `.countdown-actions button` rule, add:
 	}
 ```
 
-- [ ] **Step 9: Verify**
+- [x] **Step 9: Verify**
 
 Run (from `web-frontend/`): `npm run check && npm run lint && npm run build && npm test`
 Expected: all pass.
@@ -884,7 +886,7 @@ After the countdown overlay block, still inside the outer `Box`, add:
 Run (from `android-app/`): `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 8: Manual verification (deferred if no device)**
+- [x] **Step 8: Manual verification (deferred if no device)**
 
 Install on Windows/MuMu and verify: from an episode, tap the Episodes button; seasons/episodes appear and the current episode is highlighted; selecting another plays it and closes the sheet; a movie shows no Episodes button; Android Back closes the sheet.
 
