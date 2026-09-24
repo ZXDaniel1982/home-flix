@@ -464,7 +464,7 @@
 					aria-label="Close episodes"
 					onclick={closeEpisodes}
 				></button>
-				<div class="episodes" role="dialog" aria-label="Episodes">
+				<div class="episodes" role="dialog" aria-modal="true" aria-label="Episodes">
 					<div class="episodes-head">
 						<strong>Episodes</strong>
 						<button class="icon" type="button" aria-label="Close" onclick={closeEpisodes}>
