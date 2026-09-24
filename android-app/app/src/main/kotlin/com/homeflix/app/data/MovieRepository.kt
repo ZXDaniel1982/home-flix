@@ -63,6 +63,26 @@ data class AdjacentEpisodes(val previous: BaseItemDto?, val next: BaseItemDto?)
 
 data class SeasonEpisodes(val season: BaseItemDto, val episodes: List<BaseItemDto>)
 
+/**
+ * Builds the season/episode structure for a series. An individual season's fetch
+ * failure yields an empty episode list; cancellation propagates unchanged.
+ */
+internal suspend fun buildSeasonEpisodes(
+    seasons: List<BaseItemDto>,
+    fetchEpisodes: suspend (String) -> List<BaseItemDto>
+): List<SeasonEpisodes> {
+    return seasons.map { season ->
+        val episodes = try {
+            fetchEpisodes(season.id.toString())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            emptyList()
+        }
+        SeasonEpisodes(season, episodes)
+    }
+}
+
 fun buildImageUrl(
     baseUrl: String,
     accessToken: String,
@@ -227,16 +247,7 @@ class JellyfinMovieRepository(
 
     override suspend fun getSeriesEpisodes(seriesId: String): List<SeasonEpisodes> {
         val seasons = getSeasons(seriesId)
-        return seasons.map { season ->
-            val episodes = try {
-                getEpisodes(season.id.toString())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                emptyList()
-            }
-            SeasonEpisodes(season, episodes)
-        }
+        return buildSeasonEpisodes(seasons) { getEpisodes(it) }
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {
