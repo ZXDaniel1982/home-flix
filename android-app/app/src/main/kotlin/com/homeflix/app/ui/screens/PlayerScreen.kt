@@ -421,7 +421,9 @@ private fun VideoPlayer(
                             episodes.seasons.forEach { seasonEpisodes ->
                                 item(key = seasonEpisodes.season.id.toString()) {
                                     Text(
-                                        text = seasonEpisodes.season.name.orEmpty(),
+                                        text = seasonEpisodes.season.name
+                                            ?: seasonEpisodes.season.indexNumber?.let { "Season $it" }
+                                            ?: "Season",
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                                     )
