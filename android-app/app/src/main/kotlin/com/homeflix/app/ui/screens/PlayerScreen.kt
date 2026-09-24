@@ -2,6 +2,7 @@ package com.homeflix.app.ui.screens
 
 import android.os.SystemClock
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,20 +12,26 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -107,6 +114,9 @@ fun PlayerScreen(
                     isEpisode = state.isEpisode,
                     previousEpisode = state.previousEpisode,
                     nextEpisode = state.nextEpisode,
+                    episodesState = viewModel.episodesState.collectAsState().value,
+                    currentEpisodeId = viewModel.playingItemId,
+                    onLoadEpisodes = viewModel::loadEpisodes,
                     onPlayEpisode = onPlayEpisode,
                     onReportStarted = viewModel::reportStarted,
                     onReportProgress = viewModel::reportProgress,
@@ -118,6 +128,7 @@ fun PlayerScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VideoPlayer(
     streamUrl: String,
@@ -125,6 +136,9 @@ private fun VideoPlayer(
     isEpisode: Boolean,
     previousEpisode: PlayerViewModel.EpisodeRef?,
     nextEpisode: PlayerViewModel.EpisodeRef?,
+    episodesState: PlayerViewModel.EpisodesState,
+    currentEpisodeId: String,
+    onLoadEpisodes: () -> Unit,
     onPlayEpisode: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
     onReportProgress: (Long, Boolean) -> Unit,
@@ -145,6 +159,8 @@ private fun VideoPlayer(
     var resumeSeekDone by remember(streamUrl) { mutableStateOf(false) }
     var showCountdown by remember(streamUrl) { mutableStateOf(false) }
     var countdownRemaining by remember(streamUrl) { mutableStateOf(COUNTDOWN_SECONDS) }
+    var showEpisodes by remember(streamUrl) { mutableStateOf(false) }
+    val episodesSheetState = rememberModalBottomSheetState()
 
     val player = remember(streamUrl) {
         ExoPlayer.Builder(context).build().apply {
@@ -307,6 +323,21 @@ private fun VideoPlayer(
                         }
                     }
 
+                    if (isEpisode) {
+                        IconButton(
+                            onClick = {
+                                onLoadEpisodes()
+                                showEpisodes = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.VideoLibrary,
+                                contentDescription = "Episodes",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
                     Text(
                         text = formatTime(positionMs),
                         color = Color.White,
@@ -358,6 +389,82 @@ private fun VideoPlayer(
                             Text("Play Now")
                         }
                     }
+                }
+            }
+        }
+
+        if (showEpisodes) {
+            ModalBottomSheet(
+                onDismissRequest = { showEpisodes = false },
+                sheetState = episodesSheetState
+            ) {
+                when (val episodes = episodesState) {
+                    is PlayerViewModel.EpisodesState.Loading -> {
+                        Text(
+                            text = "Loading episodes…",
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    is PlayerViewModel.EpisodesState.Error -> {
+                        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(episodes.message, color = MaterialTheme.colorScheme.error)
+                            TextButton(onClick = onLoadEpisodes) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+
+                    is PlayerViewModel.EpisodesState.Loaded -> {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            episodes.seasons.forEach { seasonEpisodes ->
+                                item(key = seasonEpisodes.season.id.toString()) {
+                                    Text(
+                                        text = seasonEpisodes.season.name.orEmpty(),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                                items(
+                                    items = seasonEpisodes.episodes,
+                                    key = { it.id.toString() }
+                                ) { episode ->
+                                    val current = episode.id.toString() == currentEpisodeId
+                                    val seasonNumber = seasonEpisodes.season.indexNumber
+                                    val episodeNumber = episode.indexNumber
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(enabled = !current) {
+                                                showEpisodes = false
+                                                onPlayEpisode(episode.id.toString())
+                                            }
+                                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (seasonNumber != null && episodeNumber != null) {
+                                                "S${seasonNumber}E${episodeNumber}"
+                                            } else {
+                                                ""
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.width(56.dp)
+                                        )
+                                        Text(
+                                            text = episode.name.orEmpty(),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is PlayerViewModel.EpisodesState.Idle -> Unit
                 }
             }
         }
