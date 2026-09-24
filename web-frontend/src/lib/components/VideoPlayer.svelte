@@ -269,7 +269,10 @@
 	}
 
 	function loadEpisodes() {
-		if (!seriesId) return;
+		if (!seriesId) {
+			episodesError = 'This item has no series.';
+			return;
+		}
 		episodesLoading = true;
 		episodesError = '';
 		getSeriesEpisodes(seriesId)
