@@ -8,7 +8,13 @@
 		reportPlaybackProgress,
 		reportPlaybackStopped
 	} from '$lib/api/playback';
-	import { getItem, getEpisodeNeighbors, type EpisodeNeighbors } from '$lib/api/items';
+	import {
+		getItem,
+		getEpisodeNeighbors,
+		getSeriesEpisodes,
+		type EpisodeNeighbors,
+		type SeasonEpisodes
+	} from '$lib/api/items';
 	import type { MediaSourceInfo, BaseItemDto } from '$lib/api/types';
 
 	let {
@@ -39,6 +45,10 @@
 	let isFullscreen = $state(false);
 	let showCountdown = $state(false);
 	let countdownRemaining = $state(COUNTDOWN_SECONDS);
+	let showEpisodes = $state(false);
+	let episodesLoading = $state(false);
+	let episodesError = $state('');
+	let seasons = $state<SeasonEpisodes[]>([]);
 
 	let previousEpisode = $derived(neighbors?.previous ?? null);
 	let nextEpisode = $derived(neighbors?.next ?? null);
@@ -64,6 +74,10 @@
 		currentTime = 0;
 		duration = 0;
 		scrubValue = null;
+		showEpisodes = false;
+		episodesLoading = false;
+		episodesError = '';
+		seasons = [];
 		cancelCountdown();
 		if (!itemId) {
 			error = 'Invalid item.';
@@ -242,6 +256,50 @@
 		goTo(previousEpisode);
 	}
 
+	function openEpisodes() {
+		showEpisodes = true;
+		cancelCountdown();
+		if (seasons.length === 0 && !episodesLoading) {
+			loadEpisodes();
+		}
+	}
+
+	function closeEpisodes() {
+		showEpisodes = false;
+	}
+
+	function loadEpisodes() {
+		if (!seriesId) return;
+		episodesLoading = true;
+		episodesError = '';
+		getSeriesEpisodes(seriesId)
+			.then((result) => {
+				seasons = result;
+			})
+			.catch(() => {
+				episodesError = 'Could not load episodes.';
+			})
+			.finally(() => {
+				episodesLoading = false;
+			});
+	}
+
+	function onKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && showEpisodes) {
+			closeEpisodes();
+		}
+	}
+
+	function selectEpisode(episode: BaseItemDto) {
+		if (episode.Id === itemId) return;
+		closeEpisodes();
+		goTo(episode);
+	}
+
+	function seasonLabel(season: BaseItemDto): string {
+		return season.Name ?? (season.IndexNumber != null ? `Season ${season.IndexNumber}` : 'Season');
+	}
+
 	function sendProgress() {
 		if (!mediaSourceId) return;
 		reportPlaybackProgress(itemId, mediaSourceId, currentTicks(), video?.paused ?? true).catch(
@@ -266,7 +324,7 @@
 	});
 </script>
 
-<svelte:window onfullscreenchange={onFullscreenChange} />
+<svelte:window onfullscreenchange={onFullscreenChange} onkeydown={onKeydown} />
 
 {#if loading}
 	<p>Loading…</p>
@@ -344,6 +402,19 @@
 					</button>
 				{/if}
 
+				{#if neighbors}
+					<button class="icon" type="button" aria-label="Episodes" onclick={openEpisodes}>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M4 6h2v2H4z" />
+							<path d="M8 6h12v2H8z" />
+							<path d="M4 11h2v2H4z" />
+							<path d="M8 11h12v2H8z" />
+							<path d="M4 16h2v2H4z" />
+							<path d="M8 16h12v2H8z" />
+						</svg>
+					</button>
+				{/if}
+
 				<span class="time">{formatTime(scrubValue ?? currentTime)}</span>
 				<input
 					class="seek"
@@ -380,6 +451,53 @@
 						<button type="button" onclick={goToNext}>Play Now</button>
 						<button type="button" onclick={cancelCountdown}>Cancel</button>
 					</div>
+				</div>
+			{/if}
+
+			{#if showEpisodes}
+				<button
+					class="episodes-backdrop"
+					type="button"
+					aria-label="Close episodes"
+					onclick={closeEpisodes}
+				></button>
+				<div class="episodes" role="dialog" aria-label="Episodes">
+					<div class="episodes-head">
+						<strong>Episodes</strong>
+						<button class="icon" type="button" aria-label="Close" onclick={closeEpisodes}>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" fill="none" />
+							</svg>
+						</button>
+					</div>
+					{#if episodesLoading}
+						<p class="episodes-msg">Loading…</p>
+					{:else if episodesError}
+						<p class="episodes-msg error">{episodesError}</p>
+						<button class="episodes-retry" type="button" onclick={loadEpisodes}>Retry</button>
+					{:else}
+						<div class="episodes-list">
+							{#each seasons as season (season.season.Id)}
+								<p class="episodes-season">{seasonLabel(season.season)}</p>
+								{#each season.episodes as episode (episode.Id)}
+									<button
+										class="episode-row"
+										class:current={episode.Id === itemId}
+										type="button"
+										disabled={episode.Id === itemId}
+										onclick={() => selectEpisode(episode)}
+									>
+										<span class="ep-num">
+											{#if season.season.IndexNumber != null && episode.IndexNumber != null}
+												S{season.season.IndexNumber}E{episode.IndexNumber}
+											{/if}
+										</span>
+										<span class="ep-name">{episode.Name}</span>
+									</button>
+								{/each}
+							{/each}
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -487,6 +605,97 @@
 	}
 
 	.countdown-actions button {
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 0.375rem;
+		cursor: pointer;
+	}
+
+	.episodes-backdrop {
+		position: absolute;
+		inset: 0;
+		border: none;
+		background: none;
+		cursor: default;
+	}
+
+	.episodes {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: min(22rem, 85%);
+		display: flex;
+		flex-direction: column;
+		background-color: rgba(0, 0, 0, 0.92);
+		color: #fff;
+		border-radius: 0.5rem;
+	}
+
+	.episodes-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+	}
+
+	.episodes-list {
+		overflow-y: auto;
+		padding: 0.5rem 0 1rem;
+	}
+
+	.episodes-season {
+		margin: 0.75rem 1rem 0.25rem;
+		font-size: 0.8125rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-text-muted);
+	}
+
+	.episode-row {
+		display: flex;
+		align-items: baseline;
+		gap: 0.75rem;
+		width: 100%;
+		padding: 0.5rem 1rem;
+		border: none;
+		background: none;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.episode-row:hover:not(:disabled) {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.episode-row.current {
+		color: var(--color-accent);
+	}
+
+	.episode-row:disabled {
+		cursor: default;
+	}
+
+	.ep-num {
+		min-width: 4rem;
+		font-size: 0.8125rem;
+		color: var(--color-text-muted);
+	}
+
+	.ep-name {
+		flex: 1;
+	}
+
+	.episodes-msg {
+		padding: 1rem;
+		margin: 0;
+	}
+
+	.episodes-retry {
+		margin: 0 1rem 1rem;
+		align-self: flex-start;
 		padding: 0.5rem 1rem;
 		border: none;
 		border-radius: 0.375rem;
