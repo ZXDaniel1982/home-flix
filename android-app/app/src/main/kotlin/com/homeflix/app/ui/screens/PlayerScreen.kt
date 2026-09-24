@@ -327,6 +327,7 @@ private fun VideoPlayer(
                         IconButton(
                             onClick = {
                                 onLoadEpisodes()
+                                showCountdown = false
                                 showEpisodes = true
                             }
                         ) {
