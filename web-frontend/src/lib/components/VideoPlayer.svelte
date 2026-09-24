@@ -45,6 +45,7 @@
 	let episodesLoading = $state(false);
 	let episodesError = $state('');
 	let episodes = $state<BaseItemDto[]>([]);
+	let loadedSeasonId = $state('');
 
 	let previousEpisode = $derived(neighbors?.previous ?? null);
 	let nextEpisode = $derived(neighbors?.next ?? null);
@@ -74,6 +75,7 @@
 		episodesLoading = false;
 		episodesError = '';
 		episodes = [];
+		loadedSeasonId = '';
 		seasonId = '';
 		seasonNumber = null;
 		cancelCountdown();
@@ -261,7 +263,7 @@
 	function openEpisodes() {
 		showEpisodes = true;
 		cancelCountdown();
-		if (episodes.length === 0 && !episodesLoading) {
+		if (loadedSeasonId !== seasonId && !episodesLoading) {
 			loadEpisodes();
 		}
 	}
@@ -277,15 +279,23 @@
 		}
 		episodesLoading = true;
 		episodesError = '';
-		getEpisodes(seasonId)
+		const requested = seasonId;
+		getEpisodes(requested)
 			.then((result) => {
-				episodes = result;
+				if (requested === seasonId) {
+					episodes = result;
+					loadedSeasonId = requested;
+				}
 			})
 			.catch(() => {
-				episodesError = 'Could not load episodes.';
+				if (requested === seasonId) {
+					episodesError = 'Could not load episodes.';
+				}
 			})
 			.finally(() => {
-				episodesLoading = false;
+				if (requested === seasonId) {
+					episodesLoading = false;
+				}
 			});
 	}
 
