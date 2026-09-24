@@ -4,6 +4,7 @@ package com.homeflix.app
 import androidx.lifecycle.SavedStateHandle
 import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.PlaybackStream
+import com.homeflix.app.data.SeasonEpisodes
 import com.homeflix.app.navigation.Routes
 import com.homeflix.app.ui.screens.PlayerViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -166,5 +167,77 @@ class PlayerViewModelTest {
         assertEquals(true, state.isEpisode)
         assertNull(state.previousEpisode)
         assertNull(state.nextEpisode)
+    }
+
+    @Test
+    fun loadEpisodes_success_setsLoadedSeasons() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            seriesEpisodes = listOf(
+                SeasonEpisodes(
+                    season = baseItem("00000000-0000-0000-0000-000000000301", "Season 1", type = BaseItemKind.SEASON),
+                    episodes = listOf(baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE))
+                )
+            )
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+
+        val state = viewModel.episodesState.value as PlayerViewModel.EpisodesState.Loaded
+        assertEquals(1, state.seasons.size)
+        assertEquals("Season 1", state.seasons[0].season.name)
+    }
+
+    @Test
+    fun loadEpisodes_failure_setsErrorAndKeepsPlayback() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+            seriesEpisodesError = RuntimeException("boom")
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.episodesState.value is PlayerViewModel.EpisodesState.Error)
+        assertTrue(viewModel.uiState.value is PlayerViewModel.UiState.Success)
+    }
+
+    @Test
+    fun loadEpisodes_twice_loadsOnce() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(EPISODE_ID, "Episode 1", type = BaseItemKind.EPISODE, seriesId = SERIES_ID)
+        }
+        val viewModel = createViewModel(repo, movieId = EPISODE_ID)
+        advanceUntilIdle()
+
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+
+        assertEquals(1, repo.seriesEpisodesCalls)
+    }
+
+    @Test
+    fun loadEpisodes_movieWithNoSeries_setsError() = runTest(mainDispatcherRule.testDispatcher) {
+        val repo = FakeMovieRepository().apply {
+            stream = PlaybackStream("http://host/stream", "ms1")
+            movie = baseItem(MOVIE_ID, "Movie")
+        }
+        val viewModel = createViewModel(repo)
+        advanceUntilIdle()
+
+        viewModel.loadEpisodes()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.episodesState.value is PlayerViewModel.EpisodesState.Error)
     }
 }

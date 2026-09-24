@@ -5,6 +5,7 @@ import com.homeflix.app.data.AuthService
 import com.homeflix.app.data.ImageCredentials
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
+import com.homeflix.app.data.SeasonEpisodes
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
@@ -66,6 +67,9 @@ class FakeMovieRepository : MovieRepository {
     var episodes: List<BaseItemDto> = emptyList()
     var adjacentEpisodes: AdjacentEpisodes? = null
     var adjacentEpisodesError: Exception? = null
+    var seriesEpisodes: List<SeasonEpisodes> = emptyList()
+    var seriesEpisodesError: Exception? = null
+    var seriesEpisodesCalls: Int = 0
     var searchResults: List<BaseItemDto> = emptyList()
     var resumeItems: List<BaseItemDto> = emptyList()
     var credentials: ImageCredentials = ImageCredentials("http://example/api", "token")
@@ -101,6 +105,13 @@ class FakeMovieRepository : MovieRepository {
         adjacentEpisodesError?.let { throw it }
         error?.let { throw it }
         return adjacentEpisodes
+    }
+
+    override suspend fun getSeriesEpisodes(seriesId: String): List<SeasonEpisodes> {
+        seriesEpisodesCalls += 1
+        seriesEpisodesError?.let { throw it }
+        error?.let { throw it }
+        return seriesEpisodes
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {

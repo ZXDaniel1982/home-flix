@@ -11,6 +11,7 @@ import com.homeflix.app.HomeFlixApplication
 import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
+import com.homeflix.app.data.SeasonEpisodes
 import com.homeflix.app.navigation.Routes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,10 @@ class PlayerViewModel(
 
     private var mediaSourceId: String = ""
 
+    val playingItemId: String get() = movieId
+
+    private var currentSeriesId: String? = null
+
     data class EpisodeRef(val id: String)
 
     sealed interface UiState {
@@ -48,11 +53,21 @@ class PlayerViewModel(
         ) : UiState
     }
 
+    sealed interface EpisodesState {
+        data object Idle : EpisodesState
+        data object Loading : EpisodesState
+        data class Error(val message: String) : EpisodesState
+        data class Loaded(val seasons: List<SeasonEpisodes>) : EpisodesState
+    }
+
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private val _unauthorizedEvents = Channel<Unit>(Channel.BUFFERED)
     val unauthorizedEvents: Flow<Unit> = _unauthorizedEvents.receiveAsFlow()
+
+    private val _episodesState = MutableStateFlow<EpisodesState>(EpisodesState.Idle)
+    val episodesState: StateFlow<EpisodesState> = _episodesState.asStateFlow()
 
     init {
         if (movieId.isEmpty()) {
@@ -68,6 +83,7 @@ class PlayerViewModel(
             try {
                 val stream = movieRepository.getStream(movieId)
                 val movie = movieRepository.getMovie(movieId)
+                currentSeriesId = movie.seriesId?.toString()
                 mediaSourceId = stream.mediaSourceId
                 val resumeTicks = movie.userData?.playbackPositionTicks ?: 0L
                 val adjacent = if (movie.type == BaseItemKind.EPISODE) {
@@ -98,6 +114,32 @@ class PlayerViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Could not play this movie.")
+            }
+        }
+    }
+
+    fun loadEpisodes() {
+        val current = _episodesState.value
+        if (current is EpisodesState.Loading || current is EpisodesState.Loaded) return
+        val seriesId = currentSeriesId
+        if (seriesId.isNullOrEmpty()) {
+            _episodesState.value = EpisodesState.Error("This item has no series.")
+            return
+        }
+        viewModelScope.launch {
+            _episodesState.value = EpisodesState.Loading
+            try {
+                val seasons = movieRepository.getSeriesEpisodes(seriesId)
+                _episodesState.value = EpisodesState.Loaded(seasons)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: InvalidStatusException) {
+                if (e.status == 401) {
+                    _unauthorizedEvents.send(Unit)
+                }
+                _episodesState.value = EpisodesState.Error("Could not load episodes.")
+            } catch (_: Exception) {
+                _episodesState.value = EpisodesState.Error("Could not load episodes.")
             }
         }
     }
