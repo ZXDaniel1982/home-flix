@@ -8,13 +8,7 @@
 		reportPlaybackProgress,
 		reportPlaybackStopped
 	} from '$lib/api/playback';
-	import {
-		getItem,
-		getEpisodeNeighbors,
-		getSeriesEpisodes,
-		type EpisodeNeighbors,
-		type SeasonEpisodes
-	} from '$lib/api/items';
+	import { getItem, getEpisodeNeighbors, getEpisodes, type EpisodeNeighbors } from '$lib/api/items';
 	import type { MediaSourceInfo, BaseItemDto } from '$lib/api/types';
 
 	let {
@@ -38,6 +32,8 @@
 	let playerEl = $state<HTMLDivElement | null>(null);
 	let neighbors = $state<EpisodeNeighbors | null>(null);
 	let seriesId = $state('');
+	let seasonId = $state('');
+	let seasonNumber = $state<number | null>(null);
 	let isPlaying = $state(false);
 	let currentTime = $state(0);
 	let duration = $state(0);
@@ -48,7 +44,7 @@
 	let showEpisodes = $state(false);
 	let episodesLoading = $state(false);
 	let episodesError = $state('');
-	let seasons = $state<SeasonEpisodes[]>([]);
+	let episodes = $state<BaseItemDto[]>([]);
 
 	let previousEpisode = $derived(neighbors?.previous ?? null);
 	let nextEpisode = $derived(neighbors?.next ?? null);
@@ -77,7 +73,9 @@
 		showEpisodes = false;
 		episodesLoading = false;
 		episodesError = '';
-		seasons = [];
+		episodes = [];
+		seasonId = '';
+		seasonNumber = null;
 		cancelCountdown();
 		if (!itemId) {
 			error = 'Invalid item.';
@@ -85,12 +83,14 @@
 			return;
 		}
 		load(itemId)
-			.then(({ src, msId, ticks, adjacent, series }) => {
+			.then(({ src, msId, ticks, adjacent, series, season, seasonNumber: seasonNum }) => {
 				streamSrc = src;
 				mediaSourceId = msId;
 				resumeTicks = ticks;
 				neighbors = adjacent;
 				seriesId = series;
+				seasonId = season;
+				seasonNumber = seasonNum;
 			})
 			.catch(() => {
 				error = 'Could not load the video.';
@@ -116,7 +116,9 @@
 			msId: source.Id,
 			ticks: item.UserData?.PlaybackPositionTicks ?? 0,
 			adjacent,
-			series: item.SeriesId ?? ''
+			series: item.SeriesId ?? '',
+			season: item.SeasonId ?? '',
+			seasonNumber: item.ParentIndexNumber ?? null
 		};
 	}
 
@@ -259,7 +261,7 @@
 	function openEpisodes() {
 		showEpisodes = true;
 		cancelCountdown();
-		if (seasons.length === 0 && !episodesLoading) {
+		if (episodes.length === 0 && !episodesLoading) {
 			loadEpisodes();
 		}
 	}
@@ -269,15 +271,15 @@
 	}
 
 	function loadEpisodes() {
-		if (!seriesId) {
-			episodesError = 'This item has no series.';
+		if (!seasonId) {
+			episodesError = 'This item has no season.';
 			return;
 		}
 		episodesLoading = true;
 		episodesError = '';
-		getSeriesEpisodes(seriesId)
+		getEpisodes(seasonId)
 			.then((result) => {
-				seasons = result;
+				episodes = result;
 			})
 			.catch(() => {
 				episodesError = 'Could not load episodes.';
@@ -297,10 +299,6 @@
 		if (episode.Id === itemId) return;
 		closeEpisodes();
 		goTo(episode);
-	}
-
-	function seasonLabel(season: BaseItemDto): string {
-		return season.Name ?? (season.IndexNumber != null ? `Season ${season.IndexNumber}` : 'Season');
 	}
 
 	function sendProgress() {
@@ -480,24 +478,24 @@
 						<button class="episodes-retry" type="button" onclick={loadEpisodes}>Retry</button>
 					{:else}
 						<div class="episodes-list">
-							{#each seasons as season (season.season.Id)}
-								<p class="episodes-season">{seasonLabel(season.season)}</p>
-								{#each season.episodes as episode (episode.Id)}
-									<button
-										class="episode-row"
-										class:current={episode.Id === itemId}
-										type="button"
-										disabled={episode.Id === itemId}
-										onclick={() => selectEpisode(episode)}
-									>
-										<span class="ep-num">
-											{#if season.season.IndexNumber != null && episode.IndexNumber != null}
-												S{season.season.IndexNumber}E{episode.IndexNumber}
-											{/if}
-										</span>
-										<span class="ep-name">{episode.Name}</span>
-									</button>
-								{/each}
+							{#if seasonNumber != null}
+								<p class="episodes-season">Season {seasonNumber}</p>
+							{/if}
+							{#each episodes as episode (episode.Id)}
+								<button
+									class="episode-row"
+									class:current={episode.Id === itemId}
+									type="button"
+									disabled={episode.Id === itemId}
+									onclick={() => selectEpisode(episode)}
+								>
+									<span class="ep-num">
+										{#if seasonNumber != null && episode.IndexNumber != null}
+											S{seasonNumber}E{episode.IndexNumber}
+										{/if}
+									</span>
+									<span class="ep-name">{episode.Name}</span>
+								</button>
 							{/each}
 						</div>
 					{/if}

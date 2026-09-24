@@ -82,21 +82,6 @@ export async function getEpisodeNeighbors(episode: BaseItemDto): Promise<Episode
 	};
 }
 
-export interface SeasonEpisodes {
-	season: BaseItemDto;
-	episodes: BaseItemDto[];
-}
-
-export async function getSeriesEpisodes(seriesId: string): Promise<SeasonEpisodes[]> {
-	const seasons = await getSeasons(seriesId);
-	return Promise.all(
-		seasons.map(async (season) => ({
-			season,
-			episodes: await getEpisodes(season.Id).catch(() => [])
-		}))
-	);
-}
-
 export async function search(query: string, limit = 50): Promise<BaseItemDto[]> {
 	const user = getUser();
 	if (!user) {

@@ -27,6 +27,7 @@ export interface BaseItemDto {
 	SeasonId?: string;
 	ProductionYear?: number;
 	IndexNumber?: number;
+	ParentIndexNumber?: number;
 	ImageTags?: Record<string, string>;
 	BackdropImageTags?: string[];
 	Overview?: string;

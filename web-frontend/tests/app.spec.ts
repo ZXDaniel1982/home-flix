@@ -166,6 +166,7 @@ test('browse episodes and switch to another episode', async ({ page }) => {
 					Type: 'Episode',
 					SeriesId: 'series-1',
 					SeasonId: 's1',
+					ParentIndexNumber: 1,
 					IndexNumber: index,
 					UserData: { PlaybackPositionTicks: 0 }
 				});

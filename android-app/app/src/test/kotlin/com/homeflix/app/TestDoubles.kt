@@ -5,7 +5,6 @@ import com.homeflix.app.data.AuthService
 import com.homeflix.app.data.ImageCredentials
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
-import com.homeflix.app.data.SeasonEpisodes
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
@@ -67,9 +66,8 @@ class FakeMovieRepository : MovieRepository {
     var episodes: List<BaseItemDto> = emptyList()
     var adjacentEpisodes: AdjacentEpisodes? = null
     var adjacentEpisodesError: Exception? = null
-    var seriesEpisodes: List<SeasonEpisodes> = emptyList()
-    var seriesEpisodesError: Exception? = null
-    var seriesEpisodesCalls: Int = 0
+    var episodesError: Exception? = null
+    var episodesCalls: Int = 0
     var searchResults: List<BaseItemDto> = emptyList()
     var resumeItems: List<BaseItemDto> = emptyList()
     var credentials: ImageCredentials = ImageCredentials("http://example/api", "token")
@@ -97,6 +95,8 @@ class FakeMovieRepository : MovieRepository {
     }
 
     override suspend fun getEpisodes(seasonId: String): List<BaseItemDto> {
+        episodesCalls += 1
+        episodesError?.let { throw it }
         error?.let { throw it }
         return episodes
     }
@@ -105,13 +105,6 @@ class FakeMovieRepository : MovieRepository {
         adjacentEpisodesError?.let { throw it }
         error?.let { throw it }
         return adjacentEpisodes
-    }
-
-    override suspend fun getSeriesEpisodes(seriesId: String): List<SeasonEpisodes> {
-        seriesEpisodesCalls += 1
-        seriesEpisodesError?.let { throw it }
-        error?.let { throw it }
-        return seriesEpisodes
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {
@@ -152,6 +145,7 @@ private val fixtureJson = Json {
 const val MOVIE_ID = "00000000-0000-0000-0000-000000000001"
 const val SERIES_ID = "00000000-0000-0000-0000-000000000002"
 const val EPISODE_ID = "00000000-0000-0000-0000-000000000003"
+const val SEASON_ID = "00000000-0000-0000-0000-000000000030"
 
 fun authResult(token: String, userId: UUID, username: String? = null): AuthenticationResult {
     val obj = buildJsonObject {
@@ -173,7 +167,9 @@ fun baseItem(
     type: BaseItemKind = BaseItemKind.MOVIE,
     imageTag: String? = null,
     seriesId: String? = null,
+    seasonId: String? = null,
     indexNumber: Int? = null,
+    parentIndexNumber: Int? = null,
     runTimeTicks: Long? = null,
     productionYear: Int? = null,
     overview: String? = null,
@@ -185,7 +181,9 @@ fun baseItem(
         put("Type", fixtureJson.encodeToString(BaseItemKind.serializer(), type).trim('"'))
         imageTag?.let { putJsonObject("ImageTags") { put("Primary", it) } }
         seriesId?.let { put("SeriesId", it) }
+        seasonId?.let { put("SeasonId", it) }
         indexNumber?.let { put("IndexNumber", it) }
+        parentIndexNumber?.let { put("ParentIndexNumber", it) }
         runTimeTicks?.let { put("RunTimeTicks", it) }
         productionYear?.let { put("ProductionYear", it) }
         overview?.let { put("Overview", it) }

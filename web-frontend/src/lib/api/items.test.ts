@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getItem, getMovies, getEpisodeNeighbors, getSeriesEpisodes, search } from './items';
+import { getItem, getMovies, getEpisodeNeighbors, search } from './items';
 import { setSession } from './session';
 import type { BaseItemDto } from './types';
 
@@ -169,77 +169,5 @@ describe('getEpisodeNeighbors', () => {
 			next: null
 		});
 		expect(fn).not.toHaveBeenCalled();
-	});
-});
-
-describe('getSeriesEpisodes', () => {
-	function seasonsResponse(): Response {
-		return jsonResponse({
-			Items: [
-				{ Id: 's1', Name: 'Season 1', IndexNumber: 1 },
-				{ Id: 's2', Name: 'Season 2', IndexNumber: 2 }
-			]
-		});
-	}
-
-	it('groups episodes under their season in order', async () => {
-		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockImplementation(async (input) => {
-				const url = input as string;
-				if (url.includes('IncludeItemTypes=Season')) return seasonsResponse();
-				if (url.includes('ParentId=s1')) {
-					return jsonResponse({ Items: [{ Id: 'e1', Name: 'S1E1', Type: 'Episode' }] });
-				}
-				return jsonResponse({
-					Items: [
-						{ Id: 'e2', Name: 'S2E1', Type: 'Episode' },
-						{ Id: 'e3', Name: 'S2E2', Type: 'Episode' }
-					]
-				});
-			})
-		);
-
-		const result = await getSeriesEpisodes('series1');
-
-		expect(result.map((s) => s.season.Id)).toEqual(['s1', 's2']);
-		expect(result[0].episodes.map((e) => e.Id)).toEqual(['e1']);
-		expect(result[1].episodes.map((e) => e.Id)).toEqual(['e2', 'e3']);
-	});
-
-	it('returns an empty array for a series with no seasons', async () => {
-		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [] })));
-
-		expect(await getSeriesEpisodes('series1')).toEqual([]);
-	});
-
-	it('returns an empty episode list for a season whose fetch fails', async () => {
-		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockImplementation(async (input) => {
-				const url = input as string;
-				if (url.includes('IncludeItemTypes=Season')) return seasonsResponse();
-				if (url.includes('ParentId=s1')) return new Response(JSON.stringify({}), { status: 500 });
-				return jsonResponse({ Items: [{ Id: 'e2', Name: 'S2E1', Type: 'Episode' }] });
-			})
-		);
-
-		const result = await getSeriesEpisodes('series1');
-
-		expect(result[0].episodes).toEqual([]);
-		expect(result[1].episodes.map((e) => e.Id)).toEqual(['e2']);
-	});
-
-	it('rejects when the season list itself fails', async () => {
-		setSession('tok', { Id: 'u1', Name: 'Alice' });
-		vi.stubGlobal(
-			'fetch',
-			vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({}), { status: 500 }))
-		);
-
-		await expect(getSeriesEpisodes('series1')).rejects.toThrow();
 	});
 });

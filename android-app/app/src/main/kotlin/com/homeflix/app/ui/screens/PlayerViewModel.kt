@@ -11,7 +11,6 @@ import com.homeflix.app.HomeFlixApplication
 import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
-import com.homeflix.app.data.SeasonEpisodes
 import com.homeflix.app.navigation.Routes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 
 class PlayerViewModel(
@@ -37,7 +37,10 @@ class PlayerViewModel(
 
     val playingItemId: String get() = movieId
 
-    private var currentSeriesId: String? = null
+    val playingSeasonNumber: Int? get() = currentSeasonNumber
+
+    private var currentSeasonId: String? = null
+    private var currentSeasonNumber: Int? = null
 
     data class EpisodeRef(val id: String)
 
@@ -57,7 +60,7 @@ class PlayerViewModel(
         data object Idle : EpisodesState
         data object Loading : EpisodesState
         data class Error(val message: String) : EpisodesState
-        data class Loaded(val seasons: List<SeasonEpisodes>) : EpisodesState
+        data class Loaded(val episodes: List<BaseItemDto>) : EpisodesState
     }
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -83,7 +86,8 @@ class PlayerViewModel(
             try {
                 val stream = movieRepository.getStream(movieId)
                 val movie = movieRepository.getMovie(movieId)
-                currentSeriesId = movie.seriesId?.toString()
+                currentSeasonId = movie.seasonId?.toString()
+                currentSeasonNumber = movie.parentIndexNumber
                 mediaSourceId = stream.mediaSourceId
                 val resumeTicks = movie.userData?.playbackPositionTicks ?: 0L
                 val adjacent = if (movie.type == BaseItemKind.EPISODE) {
@@ -121,16 +125,16 @@ class PlayerViewModel(
     fun loadEpisodes() {
         val current = _episodesState.value
         if (current is EpisodesState.Loading || current is EpisodesState.Loaded) return
-        val seriesId = currentSeriesId
-        if (seriesId.isNullOrEmpty()) {
-            _episodesState.value = EpisodesState.Error("This item has no series.")
+        val seasonId = currentSeasonId
+        if (seasonId.isNullOrEmpty()) {
+            _episodesState.value = EpisodesState.Error("This item has no season.")
             return
         }
         _episodesState.value = EpisodesState.Loading
         viewModelScope.launch {
             try {
-                val seasons = movieRepository.getSeriesEpisodes(seriesId)
-                _episodesState.value = EpisodesState.Loaded(seasons)
+                val episodes = movieRepository.getEpisodes(seasonId)
+                _episodesState.value = EpisodesState.Loaded(episodes)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: InvalidStatusException) {

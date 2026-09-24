@@ -116,6 +116,7 @@ fun PlayerScreen(
                     nextEpisode = state.nextEpisode,
                     episodesState = viewModel.episodesState.collectAsState().value,
                     currentEpisodeId = viewModel.playingItemId,
+                    seasonNumber = viewModel.playingSeasonNumber,
                     onLoadEpisodes = viewModel::loadEpisodes,
                     onPlayEpisode = onPlayEpisode,
                     onReportStarted = viewModel::reportStarted,
@@ -138,6 +139,7 @@ private fun VideoPlayer(
     nextEpisode: PlayerViewModel.EpisodeRef?,
     episodesState: PlayerViewModel.EpisodesState,
     currentEpisodeId: String,
+    seasonNumber: Int?,
     onLoadEpisodes: () -> Unit,
     onPlayEpisode: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
@@ -419,49 +421,46 @@ private fun VideoPlayer(
 
                     is PlayerViewModel.EpisodesState.Loaded -> {
                         LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                            episodes.seasons.forEach { seasonEpisodes ->
-                                item(key = seasonEpisodes.season.id.toString()) {
+                            if (seasonNumber != null) {
+                                item(key = "season-header") {
                                     Text(
-                                        text = seasonEpisodes.season.name
-                                            ?: seasonEpisodes.season.indexNumber?.let { "Season $it" }
-                                            ?: "Season",
+                                        text = "Season $seasonNumber",
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                                     )
                                 }
-                                items(
-                                    items = seasonEpisodes.episodes,
-                                    key = { it.id.toString() }
-                                ) { episode ->
-                                    val current = episode.id.toString() == currentEpisodeId
-                                    val seasonNumber = seasonEpisodes.season.indexNumber
-                                    val episodeNumber = episode.indexNumber
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable(enabled = !current) {
-                                                showEpisodes = false
-                                                onPlayEpisode(episode.id.toString())
-                                            }
-                                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = if (seasonNumber != null && episodeNumber != null) {
-                                                "S${seasonNumber}E${episodeNumber}"
-                                            } else {
-                                                ""
-                                            },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.width(56.dp)
-                                        )
-                                        Text(
-                                            text = episode.name.orEmpty(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
+                            }
+                            items(
+                                items = episodes.episodes,
+                                key = { it.id.toString() }
+                            ) { episode ->
+                                val current = episode.id.toString() == currentEpisodeId
+                                val episodeNumber = episode.indexNumber
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = !current) {
+                                            showEpisodes = false
+                                            onPlayEpisode(episode.id.toString())
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (seasonNumber != null && episodeNumber != null) {
+                                            "S${seasonNumber}E${episodeNumber}"
+                                        } else {
+                                            ""
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.width(56.dp)
+                                    )
+                                    Text(
+                                        text = episode.name.orEmpty(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
                                 }
                             }
                         }

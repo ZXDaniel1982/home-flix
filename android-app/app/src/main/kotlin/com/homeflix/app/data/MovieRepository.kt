@@ -2,7 +2,6 @@ package com.homeflix.app.data
 
 import java.util.UUID
 import java.nio.charset.StandardCharsets
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -38,8 +37,6 @@ interface MovieRepository {
 
     suspend fun getAdjacentEpisodes(itemId: String): AdjacentEpisodes?
 
-    suspend fun getSeriesEpisodes(seriesId: String): List<SeasonEpisodes>
-
     suspend fun search(query: String, limit: Int): List<BaseItemDto>
 
     suspend fun getResumeItems(limit: Int): List<BaseItemDto>
@@ -60,28 +57,6 @@ data class ImageCredentials(val baseUrl: String, val accessToken: String)
 data class PlaybackStream(val url: String, val mediaSourceId: String)
 
 data class AdjacentEpisodes(val previous: BaseItemDto?, val next: BaseItemDto?)
-
-data class SeasonEpisodes(val season: BaseItemDto, val episodes: List<BaseItemDto>)
-
-/**
- * Builds the season/episode structure for a series. An individual season's fetch
- * failure yields an empty episode list; cancellation propagates unchanged.
- */
-internal suspend fun buildSeasonEpisodes(
-    seasons: List<BaseItemDto>,
-    fetchEpisodes: suspend (String) -> List<BaseItemDto>
-): List<SeasonEpisodes> {
-    return seasons.map { season ->
-        val episodes = try {
-            fetchEpisodes(season.id.toString())
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            emptyList()
-        }
-        SeasonEpisodes(season, episodes)
-    }
-}
 
 fun buildImageUrl(
     baseUrl: String,
@@ -243,11 +218,6 @@ class JellyfinMovieRepository(
             previous = previousEpisodeInSeason(episodes, itemId),
             next = nextEpisodeInSeason(episodes, itemId)
         )
-    }
-
-    override suspend fun getSeriesEpisodes(seriesId: String): List<SeasonEpisodes> {
-        val seasons = getSeasons(seriesId)
-        return buildSeasonEpisodes(seasons) { getEpisodes(it) }
     }
 
     override suspend fun search(query: String, limit: Int): List<BaseItemDto> {
