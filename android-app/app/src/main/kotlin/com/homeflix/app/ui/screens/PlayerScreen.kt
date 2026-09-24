@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -162,6 +163,7 @@ private fun VideoPlayer(
     var showCountdown by remember(streamUrl) { mutableStateOf(false) }
     var countdownRemaining by remember(streamUrl) { mutableStateOf(COUNTDOWN_SECONDS) }
     var showEpisodes by remember(streamUrl) { mutableStateOf(false) }
+    val showEpisodesLatest = rememberUpdatedState(showEpisodes)
     val episodesSheetState = rememberModalBottomSheetState()
 
     val player = remember(streamUrl) {
@@ -207,7 +209,7 @@ private fun VideoPlayer(
                         player.seekTo(resumeTicks / 10_000)
                     }
                 }
-                if (state == Player.STATE_ENDED && nextEpisode != null) {
+                if (state == Player.STATE_ENDED && nextEpisode != null && !showEpisodesLatest.value) {
                     showCountdown = true
                 }
             }

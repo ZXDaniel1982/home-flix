@@ -173,7 +173,7 @@
 	function onEnded() {
 		isPlaying = false;
 		reportStopped();
-		if (!nextEpisode) return;
+		if (showEpisodes || !nextEpisode) return;
 		startCountdown();
 	}
 
