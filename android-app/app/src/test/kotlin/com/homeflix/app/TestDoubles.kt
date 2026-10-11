@@ -2,12 +2,16 @@ package com.homeflix.app
 
 import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.AuthService
+import com.homeflix.app.data.HttpBody
+import com.homeflix.app.data.HttpTransport
 import com.homeflix.app.data.ImageCredentials
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
+import java.io.ByteArrayInputStream
+import java.security.MessageDigest
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -204,3 +208,27 @@ fun userData(playbackPositionTicks: Long = 0, playedPercentage: Double? = null):
     }
     return fixtureJson.decodeFromJsonElement(UserItemDataDto.serializer(), obj)
 }
+
+class FakeHttpTransport : HttpTransport {
+    var text: String = ""
+    var textError: Exception? = null
+    var streamBytes: ByteArray = ByteArray(0)
+    var streamError: Exception? = null
+    val textUrls = mutableListOf<String>()
+    val streamUrls = mutableListOf<String>()
+
+    override fun getText(url: String): String {
+        textUrls.add(url)
+        textError?.let { throw it }
+        return text
+    }
+
+    override fun openStream(url: String): HttpBody {
+        streamUrls.add(url)
+        streamError?.let { throw it }
+        return HttpBody(ByteArrayInputStream(streamBytes), streamBytes.size.toLong())
+    }
+}
+
+fun sha256Hex(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
