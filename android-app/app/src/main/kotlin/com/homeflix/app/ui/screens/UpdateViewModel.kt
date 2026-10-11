@@ -15,6 +15,7 @@ import com.homeflix.app.data.UpdateManifestException
 import com.homeflix.app.data.UpdateRepository
 import com.homeflix.app.data.joinUrl
 import com.homeflix.app.data.updateOrigin
+import java.io.OutputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -25,8 +26,27 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-/** Raises when a downloaded APK does not match the manifest's digest. */
+/** Raises when a downloaded APK does not match the manifest's digest or size. */
 private class UpdateVerificationException : Exception("digest mismatch")
+
+/** Counts the bytes written through it, delegating writes to [delegate]. */
+private class CountingOutputStream(private val delegate: OutputStream) : OutputStream() {
+    var count: Long = 0
+        private set
+
+    override fun write(b: Int) {
+        delegate.write(b)
+        count += 1
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        delegate.write(b, off, len)
+        count += len.toLong()
+    }
+
+    override fun flush() = delegate.flush()
+    override fun close() = delegate.close()
+}
 
 class UpdateViewModel(
     private val settingsRepository: SettingsRepository,
@@ -109,11 +129,14 @@ class UpdateViewModel(
                 val serverUrl = settingsRepository.serverUrl.first().orEmpty()
                 val apkUrl = joinUrl(updateOrigin(serverUrl), manifest.apkUrl)
                 updateInstaller.install { sink ->
+                    val countingSink = CountingOutputStream(sink)
                     val digest = updateRepository.download(apkUrl, manifest.size, { done, total ->
                         _installState.value = InstallState.Downloading(done, total)
-                    }, sink)
+                    }, countingSink)
                     _installState.value = InstallState.Verifying
-                    if (!digest.equals(manifest.sha256, ignoreCase = true)) {
+                    if (!digest.equals(manifest.sha256, ignoreCase = true) ||
+                        (manifest.size > 0 && countingSink.count != manifest.size)
+                    ) {
                         throw UpdateVerificationException()
                     }
                     _installState.value = InstallState.Installing

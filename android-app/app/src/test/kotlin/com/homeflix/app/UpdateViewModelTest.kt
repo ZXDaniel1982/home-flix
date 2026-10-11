@@ -206,6 +206,24 @@ class UpdateViewModelTest {
     }
 
     @Test
+    fun update_sizeMismatch_failsWithoutCommitting() = runTest(mainDispatcherRule.testDispatcher) {
+        val bytes = "hello".toByteArray()
+        val repo = FakeUpdateRepository().apply {
+            manifest = updateManifest(versionCode = 2, size = bytes.size.toLong() + 1, sha256 = sha256Hex(bytes))
+            downloadedBytes = bytes
+        }
+        val installer = FakeUpdateInstaller()
+        val vm = viewModel(repo = repo, installer = installer)
+
+        // The digest matches but the advertised size does not.
+        vm.update(repo.manifest)
+        advanceUntilIdle()
+
+        assertTrue(vm.installState.value is UpdateViewModel.InstallState.Failed)
+        assertFalse(installer.committed)
+    }
+
+    @Test
     fun update_downloadError_setsFailed() = runTest(mainDispatcherRule.testDispatcher) {
         val repo = FakeUpdateRepository().apply { downloadError = RuntimeException("boom") }
         val installer = FakeUpdateInstaller()
