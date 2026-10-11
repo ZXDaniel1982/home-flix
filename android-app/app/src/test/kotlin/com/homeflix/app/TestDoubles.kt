@@ -33,11 +33,22 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.UserItemDataDto
 
-class FakeSettingsRepository : SettingsRepository {
-    private val _serverUrl = MutableStateFlow<String?>(null)
+class FakeSettingsRepository(
+    initialUrl: String? = null,
+    initialSkippedVersion: Int? = null
+) : SettingsRepository {
+    private val _serverUrl = MutableStateFlow(initialUrl)
     override val serverUrl: Flow<String?> = _serverUrl
+
     override suspend fun setServerUrl(url: String) {
         _serverUrl.value = url
+    }
+
+    private val _skippedVersionCode = MutableStateFlow(initialSkippedVersion)
+    override val skippedVersionCode: Flow<Int?> = _skippedVersionCode
+
+    override suspend fun setSkippedVersionCode(code: Int) {
+        _skippedVersionCode.value = code
     }
 }
 

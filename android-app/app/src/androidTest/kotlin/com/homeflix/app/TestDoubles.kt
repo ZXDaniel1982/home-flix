@@ -10,11 +10,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.UserDto
 
-class FakeSettingsRepository(initialUrl: String? = "http://host/api") : SettingsRepository {
+class FakeSettingsRepository(
+    initialUrl: String? = "http://host/api",
+    initialSkippedVersion: Int? = null
+) : SettingsRepository {
     private val _serverUrl = MutableStateFlow(initialUrl)
     override val serverUrl: Flow<String?> = _serverUrl
     override suspend fun setServerUrl(url: String) {
         _serverUrl.value = url
+    }
+
+    private val _skippedVersionCode = MutableStateFlow(initialSkippedVersion)
+    override val skippedVersionCode: Flow<Int?> = _skippedVersionCode
+    override suspend fun setSkippedVersionCode(code: Int) {
+        _skippedVersionCode.value = code
     }
 }
 
