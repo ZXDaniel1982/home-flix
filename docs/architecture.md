@@ -297,8 +297,9 @@ The Android app can check for and install its own updates over the LAN:
   fallback never rewrites it (see `docker/Caddyfile`).
 - **Manifest:** `GET /updates/android/manifest.json` — `schemaVersion`,
   `versionCode`, `versionName`, `minSdk`, `apkUrl` (relative to the origin),
-  `sha256`, `size`, and optional `releaseNotes`. The manifest revalidates;
-  version-named APKs are cached immutably.
+  `sha256`, `size`, and optional `releaseNotes`. The manifest revalidates; APKs are
+  named `home-flix-<versionName>-<versionCode>.apk` and cached immutably, so every
+  release URL is unique.
 - **Client:** on launch (silently) and on demand from Settings, the app derives
   the origin from the stored server URL (stripping the `/api` base path from
   `ServerUrlViewModel.normalize`), compares `versionCode`, and — with the user's
@@ -308,7 +309,9 @@ The Android app can check for and install its own updates over the LAN:
   Android refuses to install an update whose signature differs.
 - **Publishing:** `scripts/publish-android-release.sh` builds a signed release,
   writes the manifest, and rsyncs both to
-  `/mnt/ssd/web-frontend/updates/android/`.
+  `/mnt/ssd/web-frontend/updates/android/`. Because that directory sits inside the
+  web root, `scripts/deploy-web.sh` excludes `/updates/` from its `--delete` — a
+  routine frontend deploy must never remove the update artifacts.
 
 See `docs/superpowers/specs/2026-10-11-android-in-app-update-design.md` for the
 full design.

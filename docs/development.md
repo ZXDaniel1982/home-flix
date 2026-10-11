@@ -235,7 +235,11 @@ NOTES=release-notes.md scripts/publish-android-release.sh
 The script builds the signed APK, writes
 `/updates/android/manifest.json` (with the SHA-256 and size), and rsyncs both
 into `/mnt/ssd/web-frontend/updates/android/` on the Orange Pi, where Caddy
-serves them. See `docs/architecture.md` §14.1 for the full flow.
+serves them. The APK file name includes both the version name and version code
+(e.g. `home-flix-0.2.0-2.apk`) so each release has a unique, immutably cacheable
+URL. Note that `scripts/deploy-web.sh` excludes `/updates/` from its `--delete`,
+so deploying the web frontend does not remove the update artifacts.
+See `docs/architecture.md` §14.1 for the full flow.
 
 **One-time transition:** the app installed before this feature is debug-signed,
 and Android refuses to install an update with a different signature. Once,
@@ -353,6 +357,7 @@ backup from `scripts/backup-jellyfin.sh`.
 | Dev server | `npm run dev` |
 | Build | `npm run build` |
 | Deploy to Orange Pi | `scripts/deploy-web.sh` (from repo root) |
+| Test the deploy script | `scripts/test-deploy-web.sh` |
 
 ### Android
 

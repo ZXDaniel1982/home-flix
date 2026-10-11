@@ -111,7 +111,12 @@ echo "== Building web frontend ($WEB_DIR) =="
 	exit 1
 }
 
-RSYNC_ARGS=(-avz --delete)
+# --delete removes stale frontend files, but the Android release artifacts live
+# under updates/android/ inside this same tree and are produced by
+# scripts/publish-android-release.sh, not by the frontend build. Exclude them so
+# a routine web deploy never wipes the update manifest and APKs (which would
+# leave Caddy's /updates/ endpoint returning 404).
+RSYNC_ARGS=(-avz --delete --exclude=/updates/)
 if [[ "$DRY_RUN" == "1" ]]; then
 	RSYNC_ARGS+=(--dry-run)
 	echo "== Dry run: not writing to $DEST =="

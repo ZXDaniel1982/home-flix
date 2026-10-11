@@ -99,7 +99,12 @@ read -r version_code version_name min_sdk <<<"$version_info"
 	exit 1
 }
 
-apk_name="home-flix-$version_name.apk"
+# The filename carries both the version name and the version code. Caddy serves
+# APKs with `Cache-Control: immutable` for a year, so a name reused across two
+# different builds (e.g. versionCode bumped without versionName) would let a
+# cache hand out the old bytes, which then fail SHA-256 verification on the
+# device. Including versionCode makes every release URL unique.
+apk_name="home-flix-$version_name-$version_code.apk"
 apk_url="/updates/android/$apk_name"
 
 rm -rf "$STAGE"

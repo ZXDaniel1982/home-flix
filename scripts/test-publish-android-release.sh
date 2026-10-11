@@ -93,14 +93,14 @@ if [[ -f "$manifest" ]]; then
 	expect_contains "manifest has versionCode 2" '"versionCode": 2' "$body"
 	expect_contains "manifest has versionName 0.2.0" '"versionName": "0.2.0"' "$body"
 	expect_contains "manifest has minSdk 24" '"minSdk": 24' "$body"
-	expect_contains "manifest points at the versioned APK" 'home-flix-0.2.0.apk' "$body"
+	expect_contains "manifest points at the versioned APK" 'home-flix-0.2.0-2.apk' "$body"
 	expect_contains "manifest carries a sha256" '"sha256"' "$body"
 else
 	echo "FAIL - manifest.json was not written to $stage"
 	fails=$((fails + 1))
 fi
 
-if [[ -f "$remote/home-flix-0.2.0.apk" && -f "$remote/manifest.json" ]]; then
+if [[ -f "$remote/home-flix-0.2.0-2.apk" && -f "$remote/manifest.json" ]]; then
 	echo "ok   - APK and manifest were synced"
 else
 	echo "FAIL - APK and manifest were not synced to $remote"
