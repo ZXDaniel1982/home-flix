@@ -4,6 +4,8 @@ package com.homeflix.app
 import com.homeflix.app.data.InstallResult
 import com.homeflix.app.ui.screens.UpdateViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -140,6 +142,49 @@ class UpdateViewModelTest {
         assertEquals(UpdateViewModel.InstallState.Installed, vm.installState.value)
         assertTrue(installer.committed)
         assertEquals("http://host/updates/android/home-flix-0.2.0.apk", repo.downloadUrls.single())
+    }
+
+    @Test
+    fun update_installingDoesNotClobberTerminalInstalled() = runTest(mainDispatcherRule.testDispatcher) {
+        val bytes = "hello".toByteArray()
+        val repo = FakeUpdateRepository().apply {
+            manifest = updateManifest(versionCode = 2, size = bytes.size.toLong(), sha256 = sha256Hex(bytes))
+            downloadedBytes = bytes
+        }
+        val installer = FakeUpdateInstaller()
+        val vm = viewModel(repo = repo, installer = installer)
+
+        val states = mutableListOf<UpdateViewModel.InstallState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.installState.collect { states.add(it) }
+        }
+        advanceUntilIdle()
+
+        vm.update(repo.manifest)
+        advanceUntilIdle()
+
+        val downloadingIndex = states.indexOfFirst { it is UpdateViewModel.InstallState.Downloading }
+        val verifyingIndex = states.indexOfFirst { it is UpdateViewModel.InstallState.Verifying }
+        val installingIndex = states.indexOfFirst { it is UpdateViewModel.InstallState.Installing }
+        val installedIndex = states.indexOfFirst { it is UpdateViewModel.InstallState.Installed }
+
+        assertTrue("Downloading not observed: $states", downloadingIndex >= 0)
+        assertTrue("Verifying not observed: $states", verifyingIndex >= 0)
+        assertTrue("Installing not observed: $states", installingIndex >= 0)
+        assertTrue("Installed not observed: $states", installedIndex >= 0)
+
+        assertTrue(
+            "Expected Downloading -> Verifying -> Installing -> Installed order: $states",
+            downloadingIndex < verifyingIndex &&
+                verifyingIndex < installingIndex &&
+                installingIndex < installedIndex
+        )
+
+        // A terminal result must not be clobbered: no Installing after Installed.
+        assertTrue(
+            "Installing appeared after Installed: $states",
+            states.indexOfLast { it is UpdateViewModel.InstallState.Installing } < installedIndex
+        )
     }
 
     @Test
