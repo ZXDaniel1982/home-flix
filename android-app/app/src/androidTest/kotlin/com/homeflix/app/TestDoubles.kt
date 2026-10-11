@@ -1,12 +1,19 @@
 package com.homeflix.app
 
 import com.homeflix.app.data.AuthService
+import com.homeflix.app.data.InstallResult
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
+import com.homeflix.app.data.UpdateInstaller
+import com.homeflix.app.data.UpdateManifest
+import com.homeflix.app.data.UpdateRepository
+import java.io.OutputStream
 import java.util.UUID
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.UserDto
 
@@ -63,3 +70,45 @@ fun authResult(token: String): AuthenticationResult = AuthenticationResult(
         hasConfiguredEasyPassword = false
     )
 )
+
+fun updateManifest(
+    versionCode: Int = 2,
+    versionName: String = "0.2.0",
+    releaseNotes: String? = null
+): UpdateManifest = UpdateManifest(
+    schemaVersion = 1,
+    versionCode = versionCode,
+    versionName = versionName,
+    minSdk = 24,
+    apkUrl = "/updates/android/home-flix-$versionName.apk",
+    sha256 = "unused",
+    size = 0L,
+    releaseNotes = releaseNotes
+)
+
+class FakeUpdateRepository : UpdateRepository {
+    var manifest: UpdateManifest = updateManifest()
+    var manifestCalls: Int = 0
+
+    override suspend fun fetchManifest(origin: String): UpdateManifest {
+        manifestCalls += 1
+        return manifest
+    }
+
+    override suspend fun download(
+        apkUrl: String,
+        size: Long,
+        onProgress: (downloaded: Long, total: Long) -> Unit,
+        sink: OutputStream
+    ): String = "unused"
+}
+
+class FakeUpdateInstaller : UpdateInstaller {
+    private val channel = Channel<InstallResult>(Channel.BUFFERED)
+    override val results = channel.receiveAsFlow()
+    var canInstall: Boolean = true
+
+    override fun canInstallPackages(): Boolean = canInstall
+
+    override suspend fun install(write: suspend (OutputStream) -> Unit) = Unit
+}
