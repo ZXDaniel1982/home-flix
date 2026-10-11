@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,9 +7,27 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Release signing. Secrets come from android-app/keystore.properties (gitignored)
+// or environment variables for headless/CI builds. Absent => unsigned release.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun secret(key: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(key)
+
 android {
     namespace = "com.homeflix.app"
     compileSdk = 36
+
+    signingConfigs {
+        create("release") {
+            secret("storeFile")?.let { storeFile = rootProject.file(it) }
+            storePassword = secret("storePassword")
+            keyAlias = secret("keyAlias")
+            keyPassword = secret("keyPassword")
+        }
+    }
 
     defaultConfig {
         applicationId = "com.homeflix.app"
@@ -20,6 +40,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

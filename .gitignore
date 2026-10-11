@@ -32,3 +32,11 @@ Thumbs.db
 
 # Docker
 *.pid
+
+# Android release signing secrets
+keystore.properties
+*.jks
+*.keystore
+
+# Local staging dir used by scripts/publish-android-release.sh
+.update-stage/
