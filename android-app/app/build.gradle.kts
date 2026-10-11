@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -34,6 +35,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -63,6 +65,7 @@ dependencies {
     implementation(libs.media3.ui)
     implementation(libs.coil.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -72,4 +75,14 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Prints "<versionCode> <versionName> <minSdk>" for scripts/publish-android-release.sh.
+tasks.register("printVersionInfo") {
+    val code = android.defaultConfig.versionCode
+    val name = android.defaultConfig.versionName
+    val minSdk = android.defaultConfig.minSdk
+    doLast {
+        println("$code $name $minSdk")
+    }
 }
