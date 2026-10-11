@@ -5,16 +5,22 @@ import com.homeflix.app.data.AuthService
 import com.homeflix.app.data.HttpBody
 import com.homeflix.app.data.HttpTransport
 import com.homeflix.app.data.ImageCredentials
+import com.homeflix.app.data.InstallResult
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
+import com.homeflix.app.data.UpdateInstaller
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.UUID
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
@@ -232,3 +238,27 @@ class FakeHttpTransport : HttpTransport {
 
 fun sha256Hex(bytes: ByteArray): String =
     MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+class FakeUpdateInstaller : UpdateInstaller {
+    private val channel = Channel<InstallResult>(Channel.BUFFERED)
+    override val results: Flow<InstallResult> = channel.receiveAsFlow()
+
+    var canInstall: Boolean = true
+    var result: InstallResult = InstallResult.Success
+    var installCalls: Int = 0
+    var committed: Boolean = false
+    var writtenBytes: ByteArray? = null
+
+    override fun canInstallPackages(): Boolean = canInstall
+
+    override suspend fun install(write: suspend (OutputStream) -> Unit) {
+        installCalls += 1
+        val sink = ByteArrayOutputStream()
+        // Mirrors the real installer: a throwing write aborts the session and
+        // produces no result.
+        write(sink)
+        writtenBytes = sink.toByteArray()
+        committed = true
+        channel.send(result)
+    }
+}
