@@ -8,7 +8,9 @@ plugins {
 }
 
 // Release signing. Secrets come from android-app/keystore.properties (gitignored)
-// or environment variables for headless/CI builds. Absent => unsigned release.
+// or environment variables for headless/CI builds. Without a configured keystore
+// the release build fails validation (storeFile is required); it never emits an
+// unsigned APK.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
     if (file.exists()) file.inputStream().use { load(it) }
