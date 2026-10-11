@@ -12,6 +12,8 @@ import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
 import com.homeflix.app.data.UpdateInstaller
+import com.homeflix.app.data.UpdateManifest
+import com.homeflix.app.data.UpdateRepository
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -271,5 +273,54 @@ class FakeUpdateInstaller : UpdateInstaller {
         writtenBytes = sink.toByteArray()
         committed = true
         channel.send(result)
+    }
+}
+
+fun updateManifest(
+    versionCode: Int = 2,
+    versionName: String = "0.2.0",
+    minSdk: Int = 24,
+    apkUrl: String = "/updates/android/home-flix-$versionName.apk",
+    sha256: String = "unused",
+    size: Long = 0L,
+    releaseNotes: String? = null
+): UpdateManifest = UpdateManifest(
+    schemaVersion = 1,
+    versionCode = versionCode,
+    versionName = versionName,
+    minSdk = minSdk,
+    apkUrl = apkUrl,
+    sha256 = sha256,
+    size = size,
+    releaseNotes = releaseNotes
+)
+
+class FakeUpdateRepository : UpdateRepository {
+    var manifest: UpdateManifest = updateManifest()
+    var manifestError: Exception? = null
+    var downloadError: Exception? = null
+    var downloadedBytes: ByteArray = ByteArray(0)
+    var manifestCalls: Int = 0
+    var manifestOrigins = mutableListOf<String>()
+    var downloadUrls = mutableListOf<String>()
+
+    override suspend fun fetchManifest(origin: String): UpdateManifest {
+        manifestCalls += 1
+        manifestOrigins.add(origin)
+        manifestError?.let { throw it }
+        return manifest
+    }
+
+    override suspend fun download(
+        apkUrl: String,
+        size: Long,
+        onProgress: (downloaded: Long, total: Long) -> Unit,
+        sink: OutputStream
+    ): String {
+        downloadUrls.add(apkUrl)
+        downloadError?.let { throw it }
+        sink.write(downloadedBytes)
+        onProgress(downloadedBytes.size.toLong(), size)
+        return sha256Hex(downloadedBytes)
     }
 }
