@@ -69,6 +69,19 @@ The bottom bar has four tabs:
 - Playback **resumes** from the last position; progress is reported to Jellyfin.
 - Unsupported files show an error message instead of playing.
 
+### Updating the app
+
+Releases are published on the media server, so the app can update itself over the
+local network.
+
+- Open **Settings** (the gear icon in the top bar) and tap **Check for updates**.
+- If a newer version exists, tap **Update**. The app downloads it, verifies it,
+  then Android asks you to confirm the install.
+- The first time, Android may ask you to allow installs from this app; the
+  Settings screen has an **Allow** button that takes you there.
+- Tap **Later** to skip a version; you will be offered the next newer one.
+- The app also checks quietly when it starts and offers an update if one is found.
+
 ## 5. Adding media
 
 ### Format

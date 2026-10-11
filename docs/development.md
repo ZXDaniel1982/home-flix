@@ -166,7 +166,7 @@ Debug build:
 ./gradlew assembleDebug
 ```
 
-Release build (requires signing config):
+Release build (requires the signing config from §6.5):
 
 ```bash
 ./gradlew assembleRelease
@@ -197,6 +197,51 @@ The Arch laptop is headless (no emulator/KVM). To run the app:
    ```bash
    adb install app-debug.apk
    ```
+
+### 6.5 Release signing and publishing
+
+Release APKs are signed with a single keystore so that in-app updates can
+install over an existing app. Secrets live in `android-app/keystore.properties`
+(gitignored); headless builds may instead set `storeFile`, `storePassword`,
+`keyAlias`, and `keyPassword` as environment variables.
+
+Create the keystore once (from the repo root):
+
+```bash
+keytool -genkeypair -v -keystore android-app/release.jks \
+  -alias homeflix -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Write `android-app/keystore.properties`:
+
+```properties
+storeFile=release.jks
+storePassword=...
+keyAlias=homeflix
+keyPassword=...
+```
+
+Back up both files. Losing them means future releases can never update an
+installed app.
+
+Bump `versionCode` / `versionName` in `android-app/app/build.gradle.kts`, then
+publish a release:
+
+```bash
+scripts/publish-android-release.sh
+NOTES=release-notes.md scripts/publish-android-release.sh
+```
+
+The script builds the signed APK, writes
+`/updates/android/manifest.json` (with the SHA-256 and size), and rsyncs both
+into `/mnt/ssd/web-frontend/updates/android/` on the Orange Pi, where Caddy
+serves them. See `docs/architecture.md` §14.1 for the full flow.
+
+**One-time transition:** the app installed before this feature is debug-signed,
+and Android refuses to install an update with a different signature. Once,
+uninstall the debug build and install the first release-signed APK
+(`adb install app/build/outputs/apk/release/app-release.apk`). Every later
+release installs in-app.
 
 ---
 
@@ -314,8 +359,11 @@ backup from `scripts/backup-jellyfin.sh`.
 | Action | Command |
 |--------|---------|
 | Debug APK | `cd android-app && ./gradlew assembleDebug` |
+| Release APK (signed) | `./gradlew :app:assembleRelease` |
 | Install on device | `adb install app/build/outputs/apk/debug/app-debug.apk` |
 | Run unit tests | `./gradlew test` |
+| Publish a release | `scripts/publish-android-release.sh` (from repo root) |
+| Test the publish script | `scripts/test-publish-android-release.sh` |
 
 ### Docker (Arch / Orange Pi)
 

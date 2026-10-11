@@ -6,7 +6,13 @@ A private home media server and streaming system.
 
 - **Jellyfin** — backend media server (direct play only, no transcoding)
 - **Web frontend** — custom SvelteKit app for browsing and playback
-- **Android app** — native Kotlin + Jetpack Compose app
+- **Android app** — native Kotlin + Jetpack Compose app (updates itself in-app)
+
+## Releasing the Android app
+
+Signed releases are published to the Orange Pi with
+`scripts/publish-android-release.sh` and installed in-app. See
+[Development](docs/development.md).
 
 ## Documentation
 

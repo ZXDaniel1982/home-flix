@@ -1,7 +1,7 @@
 # Project Plan — Home Media Server
 
-**Version:** 1.0
-**Last Updated:** 2026-08-24
+**Version:** 1.1
+**Last Updated:** 2026-10-11
 
 This document breaks the project into manageable **modules**, **epics**, and **stories** to guide incremental development. Each story is marked with a priority (MVP, Recommended, Optional) and a rough size (S, M, L, XL). Tick the boxes as you complete each story to track your progress.
 
@@ -134,7 +134,14 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [ ] 3.6.1 — Cache metadata locally: Use Room to store movie info for offline browsing. *(Optional, L)*
 - [ ] 3.6.2 — Download for offline playback: Request download URL, save to app storage, play locally. *(Optional, XL)*
 
-**Dependencies:** 3.1 → 3.2 → 3.3 → 3.4 (MVP). 3.5, 3.6 later.
+### Epic 3.7 — In-App Updates
+
+- [ ] 3.7.1 — Publish the release manifest and APKs through Caddy (`/updates/android/`). *(Recommended, M)*
+- [ ] 3.7.2 — Check for updates on launch and from a Settings screen. *(Recommended, M)*
+- [ ] 3.7.3 — Download, verify (SHA-256), and install via `PackageInstaller`. *(Recommended, L)*
+- [ ] 3.7.4 — Sign releases with a stable keystore and publish via script. *(Recommended, M)*
+
+**Dependencies:** 3.1 → 3.2 → 3.3 → 3.4 (MVP). 3.5, 3.6, 3.7 later.
 
 ---
 

@@ -1,7 +1,7 @@
 # Home Media Server — System Architecture
 
-**Version:** 1.2
-**Last Updated:** 2026-08-27
+**Version:** 1.3
+**Last Updated:** 2026-10-11
 
 ---
 
@@ -25,7 +25,8 @@ The system is designed for personal use within a home network and does **not** r
 | **Media Server** | Jellyfin (Docker container, ARM64) | Media library management, metadata fetching, user authentication, REST API, direct streaming. |
 | **Reverse Proxy** | Caddy | TLS termination (self‑signed), routing requests to Jellyfin and web frontend. |
 | **Web Frontend** | SvelteKit (static SPA) | Custom user interface for browsing and playing media in a browser. |
-| **Android App** | Kotlin + Jetpack Compose | Native Android client with media browsing and playback. |
+| **Android App** | Kotlin + Jetpack Compose | Native Android client with media browsing, playback, and in-app updates. |
+| **Update Channel** | Caddy static files (`/updates/android/`) | Publishes the Android release manifest and APK files the app updates from. |
 | **Database** | SQLite (inside Jellyfin) | Stores user data, library items, metadata, play states. Managed entirely by Jellyfin. |
 | **Streaming Storage** | SSD (512 GB) at `/mnt/ssd` | Video files staged for streaming; Jellyfin configuration, database, metadata, image cache. |
 | **Archive Storage** | USB 3.0 HDD (2 TB) at `/mnt/hdd` | Long‑term archive of all video files. Copied to the SSD when needed for streaming. |
@@ -219,6 +220,7 @@ The Android app mirrors the web functionality and uses the jellyfin‑sdk‑kotl
 | Movies Grid | Browse movies |
 | Movie Detail | Metadata and play button |
 | Player | Media3 ExoPlayer with direct stream URL |
+| Settings | App version, check for updates (in-app update), log out |
 
 Playback: ExoPlayer plays the direct stream URL. The app sends playback progress updates to Jellyfin for resume functionality (optional MVP).
 
@@ -277,11 +279,39 @@ Clients use a subset of Jellyfin’s REST API. The web app authenticates with th
    - Build on Arch laptop (`npm run build`).
    - Copy static files to Orange Pi (`scp` or via Docker image).
 2. Android app
-   - Build APK on Arch laptop (headless: `./gradlew assembleDebug`).
-   - Copy APK to Windows PC (`scp`) and install in an emulator (e.g., MuMu Player) or on a device.
+   - Build a signed release on the Arch laptop (`./gradlew :app:assembleRelease`).
+   - Publish it to the Orange Pi with `scripts/publish-android-release.sh`, which
+     writes the manifest and APK into the directory Caddy serves.
+   - Installed apps then update in place (see §14.1). For a device that cannot
+     reach the server, copy the APK (`scp`) and install it manually.
 3. Docker configs
    - Update `docker-compose.yml` in repo.
    - Pull on Orange Pi and restart containers.
+
+### 14.1 Android in-app updates
+
+The Android app can check for and install its own updates over the LAN:
+
+- **Host:** the Caddy container serves release artifacts from the same `/srv`
+  mount as the web app, at `/updates/android/`. The route is explicit so the SPA
+  fallback never rewrites it (see `docker/Caddyfile`).
+- **Manifest:** `GET /updates/android/manifest.json` — `schemaVersion`,
+  `versionCode`, `versionName`, `minSdk`, `apkUrl` (relative to the origin),
+  `sha256`, `size`, and optional `releaseNotes`. The manifest revalidates;
+  version-named APKs are cached immutably.
+- **Client:** on launch (silently) and on demand from Settings, the app derives
+  the origin from the stored server URL (stripping the `/api` base path from
+  `ServerUrlViewModel.normalize`), compares `versionCode`, and — with the user's
+  confirmation — streams the APK into an Android `PackageInstaller` session,
+  verifying size and SHA-256 before committing it to the system installer.
+- **Signing:** distributed builds are signed with a single, stable release key;
+  Android refuses to install an update whose signature differs.
+- **Publishing:** `scripts/publish-android-release.sh` builds a signed release,
+  writes the manifest, and rsyncs both to
+  `/mnt/ssd/web-frontend/updates/android/`.
+
+See `docs/superpowers/specs/2026-10-11-android-in-app-update-design.md` for the
+full design.
 
 ---
 
