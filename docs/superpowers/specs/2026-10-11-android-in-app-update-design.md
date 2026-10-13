@@ -64,7 +64,7 @@ non-system app — the user always confirms through the system installer.
 | Release path | `/mnt/ssd/web-frontend/updates/android/`, served at `/updates/android/` | Inside the existing mount; explicitly routed so it bypasses SPA fallback |
 | Manifest | `manifest.json` with `schemaVersion`, `versionCode`, `versionName`, `minSdk`, `apkUrl`, `sha256`, `size`, `releaseNotes` | Enough to decide, verify, and describe an update |
 | `apkUrl` | Relative to the origin | Works for hostname or raw-IP entry |
-| Manifest caching | `no-cache`; APKs version-named and cached immutably | New releases are seen immediately; APK bodies cache forever |
+| Manifest caching | `no-cache`; APKs named with version name **and** version code, cached immutably | New releases are seen immediately; every release URL is unique, so an immutable cache can never serve two different builds from one URL |
 | Signing | One release keystore via gitignored `keystore.properties` (+ env overrides) | Required for update-over-install; headless-friendly |
 | Self version | `BuildConfig.VERSION_CODE`/`VERSION_NAME` (`buildConfig = true`) | Clean, testable; no `PackageManager` reflection |
 | Install handoff | `PackageInstaller.Session` committed after verification | Reports the real outcome; no APK persists to disk |
@@ -119,7 +119,7 @@ No new volume or container: `/srv` already maps to `/mnt/ssd/web-frontend`.
   "versionCode": 2,
   "versionName": "0.2.0",
   "minSdk": 24,
-  "apkUrl": "/updates/android/home-flix-0.2.0.apk",
+  "apkUrl": "/updates/android/home-flix-0.2.0-2.apk",
   "sha256": "e3b0c44298fc1c149afbf4c8996fb924…",
   "size": 12345678,
   "releaseNotes": "Adds the episode browser."
@@ -137,10 +137,14 @@ Follows `scripts/deploy-web.sh` conventions:
   (default `/mnt/ssd/web-frontend/updates/android`), `NOTES` (optional release-notes file),
   `DRY_RUN`, plus keystore env overrides for headless signing.
 - Steps: run `./gradlew clean assembleRelease`; read `versionCode`/`versionName` from a new
-  `./gradlew -q printVersionInfo` task; copy the APK to `home-flix-<versionName>.apk`; compute
-  `sha256` and `size`; write `manifest.json`; `rsync` the APK and manifest to `REMOTE_DIR`.
+  `./gradlew -q printVersionInfo` task; copy the APK to `home-flix-<versionName>-<versionCode>.apk`
+  (both parts, so every release URL is unique under immutable caching); compute `sha256` and `size`;
+  write `manifest.json`; `rsync` the APK and manifest to `REMOTE_DIR`.
 - Safety: require an absolute, non-suspicious `REMOTE_DIR` (as `deploy-web.sh` does). Do **not**
   use `rsync --delete`, so previously published APKs remain available.
+- **Coexistence with web deploys:** the release directory lives inside the web root that
+  `scripts/deploy-web.sh` syncs, so that script must exclude `/updates/` from its `--delete`;
+  otherwise a routine frontend deploy would remove the manifest and APKs.
 
 ## 6. Android data layer
 

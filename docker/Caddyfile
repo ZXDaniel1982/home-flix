@@ -13,6 +13,17 @@ http://{$SERVER_HOSTNAME}, http://{$SERVER_IP} {
 		file_server
 	}
 
+	# Android release artifacts. Served from the same mount as the web app but
+	# explicitly routed so the SPA fallback never rewrites them to index.html.
+	# The manifest revalidates so a new release is seen immediately; versioned
+	# APK filenames are immutable.
+	handle /updates/* {
+		root * /srv
+		header /updates/android/manifest.json Cache-Control "no-cache"
+		header /updates/android/*.apk Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
 	handle {
 		root * /srv
 		try_files {path} /index.html

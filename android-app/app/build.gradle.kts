@@ -1,12 +1,35 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
+
+// Release signing. Secrets come from android-app/keystore.properties (gitignored)
+// or environment variables for headless/CI builds. Without a configured keystore
+// the release build fails validation (storeFile is required); it never emits an
+// unsigned APK.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun secret(key: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(key)
 
 android {
     namespace = "com.homeflix.app"
     compileSdk = 36
+
+    signingConfigs {
+        create("release") {
+            secret("storeFile")?.let { storeFile = rootProject.file(it) }
+            storePassword = secret("storePassword")
+            keyAlias = secret("keyAlias")
+            keyPassword = secret("keyPassword")
+        }
+    }
 
     defaultConfig {
         applicationId = "com.homeflix.app"
@@ -19,6 +42,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -34,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -63,6 +88,7 @@ dependencies {
     implementation(libs.media3.ui)
     implementation(libs.coil.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -72,4 +98,14 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Prints "<versionCode> <versionName> <minSdk>" for scripts/publish-android-release.sh.
+tasks.register("printVersionInfo") {
+    val code = android.defaultConfig.versionCode
+    val name = android.defaultConfig.versionName
+    val minSdk = android.defaultConfig.minSdk
+    doLast {
+        println("$code $name $minSdk")
+    }
 }

@@ -15,7 +15,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
@@ -24,8 +28,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.homeflix.app.data.UpdateManifest
 import com.homeflix.app.ui.SessionViewModel
 import com.homeflix.app.ui.screens.HomeScreen
+import com.homeflix.app.ui.screens.InstallProgressDialog
 import com.homeflix.app.ui.screens.LoginScreen
 import com.homeflix.app.ui.screens.LoginViewModel
 import com.homeflix.app.ui.screens.MovieDetailScreen
@@ -35,14 +41,18 @@ import com.homeflix.app.ui.screens.SearchScreen
 import com.homeflix.app.ui.screens.SeriesDetailScreen
 import com.homeflix.app.ui.screens.ServerUrlScreen
 import com.homeflix.app.ui.screens.ServerUrlViewModel
+import com.homeflix.app.ui.screens.SettingsScreen
 import com.homeflix.app.ui.screens.TvSeriesScreen
+import com.homeflix.app.ui.screens.UpdateAvailableDialog
+import com.homeflix.app.ui.screens.UpdateViewModel
 
 @Composable
 fun AppNavHost(
     sessionViewModel: SessionViewModel,
     modifier: Modifier = Modifier,
     serverUrlViewModel: ServerUrlViewModel? = null,
-    loginViewModel: LoginViewModel? = null
+    loginViewModel: LoginViewModel? = null,
+    updateViewModel: UpdateViewModel? = null
 ) {
     val navController = rememberNavController()
 
@@ -95,21 +105,24 @@ fun AppNavHost(
                 composable(Routes.HOME) {
                     HomeScreen(
                         onItemClick = { itemId -> navController.navigate(Routes.player(itemId)) },
-                        onLogout = sessionViewModel::logout
+                        onLogout = sessionViewModel::logout,
+                        onSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
 
                 composable(Routes.MOVIES) {
                     MoviesScreen(
                         onMovieClick = { movieId -> navController.navigate(Routes.movieDetail(movieId)) },
-                        onLogout = sessionViewModel::logout
+                        onLogout = sessionViewModel::logout,
+                        onSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
 
                 composable(Routes.TV_SERIES) {
                     TvSeriesScreen(
                         onSeriesClick = { seriesId -> navController.navigate(Routes.seriesDetail(seriesId)) },
-                        onLogout = sessionViewModel::logout
+                        onLogout = sessionViewModel::logout,
+                        onSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
 
@@ -122,14 +135,12 @@ fun AppNavHost(
                                 navController.navigate(Routes.movieDetail(item.id))
                             }
                         },
-                        onLogout = sessionViewModel::logout
+                        onLogout = sessionViewModel::logout,
+                        onSettings = { navController.navigate(Routes.SETTINGS) }
                     )
                 }
 
-                composable(
-                    route = Routes.MOVIE_DETAIL,
-                    arguments = listOf(navArgument(Routes.ARG_MOVIE_ID) { type = NavType.StringType })
-                ) { backStackEntry ->
+                composable(Routes.MOVIE_DETAIL) { backStackEntry ->
                     val movieId = backStackEntry.arguments?.getString(Routes.ARG_MOVIE_ID).orEmpty()
                     MovieDetailScreen(
                         onPlay = { navController.navigate(Routes.player(movieId)) },
@@ -138,10 +149,7 @@ fun AppNavHost(
                     )
                 }
 
-                composable(
-                    route = Routes.SERIES_DETAIL,
-                    arguments = listOf(navArgument(Routes.ARG_SERIES_ID) { type = NavType.StringType })
-                ) { backStackEntry ->
+                composable(Routes.SERIES_DETAIL) { backStackEntry ->
                     val seriesId = backStackEntry.arguments?.getString(Routes.ARG_SERIES_ID).orEmpty()
                     SeriesDetailScreen(
                         onPlayEpisode = { episodeId -> navController.navigate(Routes.player(episodeId)) },
@@ -163,6 +171,16 @@ fun AppNavHost(
                         },
                         onLogout = sessionViewModel::logout
                     )
+                }
+
+                if (updateViewModel != null) {
+                    composable(Routes.SETTINGS) {
+                        SettingsScreen(
+                            onBack = { navController.popBackStack() },
+                            onLogout = sessionViewModel::logout,
+                            updateViewModel = updateViewModel
+                        )
+                    }
                 }
             }
         }
@@ -219,5 +237,34 @@ fun AppNavHost(
                 )
             }
         }
+    }
+
+    if (updateViewModel != null) {
+        var prompt by remember { mutableStateOf<UpdateManifest?>(null) }
+        LaunchedEffect(updateViewModel) {
+            updateViewModel.checkOnLaunch()
+        }
+        LaunchedEffect(updateViewModel) {
+            updateViewModel.promptEvents.collect { prompt = it }
+        }
+        val installState by updateViewModel.installState.collectAsState()
+
+        prompt?.let { manifest ->
+            UpdateAvailableDialog(
+                manifest = manifest,
+                onUpdate = {
+                    prompt = null
+                    updateViewModel.update(manifest)
+                },
+                onLater = {
+                    prompt = null
+                    updateViewModel.dismiss(manifest)
+                }
+            )
+        }
+        InstallProgressDialog(
+            state = installState,
+            onDismiss = { updateViewModel.dismissInstallResult() }
+        )
     }
 }

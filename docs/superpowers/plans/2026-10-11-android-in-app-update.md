@@ -10,6 +10,14 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-11-android-in-app-update-design.md`
 
+> **Revised 2026-10-12 (post-review):** an automated review of the opened PR found two
+> defects that the task-scoped reviews could not see (they were diff-scoped, and
+> `scripts/deploy-web.sh` was never modified). Both are now fixed: (1) `deploy-web.sh`
+> excludes `/updates/` from its `--delete`, otherwise a routine web deploy wiped the
+> release artifacts; (2) the APK filename carries the `versionCode` as well as the
+> name (`home-flix-<versionName>-<versionCode>.apk`) so an immutable cache can never
+> serve two different builds from one URL. The binding authority remains the spec.
+
 ## Global Constraints
 
 - Local home network only: the update origin is derived from the stored server URL; no public internet, no Play Store / F-Droid.

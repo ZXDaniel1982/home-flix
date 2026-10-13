@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.homeflix.app.navigation.AppNavHost
 import com.homeflix.app.ui.SessionViewModel
+import com.homeflix.app.ui.screens.UpdateViewModel
 import com.homeflix.app.ui.theme.HomeFlixTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,9 +22,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             HomeFlixTheme {
                 val sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)
+                val updateViewModel: UpdateViewModel = viewModel(factory = UpdateViewModel.Factory)
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AppNavHost(
                         sessionViewModel = sessionViewModel,
+                        updateViewModel = updateViewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

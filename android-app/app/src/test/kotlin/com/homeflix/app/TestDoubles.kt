@@ -2,15 +2,27 @@ package com.homeflix.app
 
 import com.homeflix.app.data.AdjacentEpisodes
 import com.homeflix.app.data.AuthService
+import com.homeflix.app.data.HttpBody
+import com.homeflix.app.data.HttpTransport
 import com.homeflix.app.data.ImageCredentials
+import com.homeflix.app.data.InstallResult
 import com.homeflix.app.data.MovieRepository
 import com.homeflix.app.data.PlaybackStream
 import com.homeflix.app.data.Session
 import com.homeflix.app.data.SessionRepository
 import com.homeflix.app.data.SettingsRepository
+import com.homeflix.app.data.UpdateInstaller
+import com.homeflix.app.data.UpdateManifest
+import com.homeflix.app.data.UpdateRepository
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.security.MessageDigest
 import java.util.UUID
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
@@ -23,11 +35,22 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.UserItemDataDto
 
-class FakeSettingsRepository : SettingsRepository {
-    private val _serverUrl = MutableStateFlow<String?>(null)
+class FakeSettingsRepository(
+    initialUrl: String? = null,
+    initialSkippedVersion: Int? = null
+) : SettingsRepository {
+    private val _serverUrl = MutableStateFlow(initialUrl)
     override val serverUrl: Flow<String?> = _serverUrl
+
     override suspend fun setServerUrl(url: String) {
         _serverUrl.value = url
+    }
+
+    private val _skippedVersionCode = MutableStateFlow(initialSkippedVersion)
+    override val skippedVersionCode: Flow<Int?> = _skippedVersionCode
+
+    override suspend fun setSkippedVersionCode(code: Int) {
+        _skippedVersionCode.value = code
     }
 }
 
@@ -203,4 +226,101 @@ fun userData(playbackPositionTicks: Long = 0, playedPercentage: Double? = null):
         playedPercentage?.let { put("PlayedPercentage", it) }
     }
     return fixtureJson.decodeFromJsonElement(UserItemDataDto.serializer(), obj)
+}
+
+class FakeHttpTransport : HttpTransport {
+    var text: String = ""
+    var textError: Exception? = null
+    var streamBytes: ByteArray = ByteArray(0)
+    var streamError: Exception? = null
+    val textUrls = mutableListOf<String>()
+    val streamUrls = mutableListOf<String>()
+
+    override fun getText(url: String): String {
+        textUrls.add(url)
+        textError?.let { throw it }
+        return text
+    }
+
+    override fun openStream(url: String): HttpBody {
+        streamUrls.add(url)
+        streamError?.let { throw it }
+        return HttpBody(ByteArrayInputStream(streamBytes), streamBytes.size.toLong())
+    }
+}
+
+fun sha256Hex(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+class FakeUpdateInstaller : UpdateInstaller {
+    private val channel = Channel<InstallResult>(Channel.BUFFERED)
+    override val results: Flow<InstallResult> = channel.receiveAsFlow()
+
+    var canInstall: Boolean = true
+    var result: InstallResult = InstallResult.Success
+    var installCalls: Int = 0
+    var committed: Boolean = false
+    var writtenBytes: ByteArray? = null
+
+    override fun canInstallPackages(): Boolean = canInstall
+
+    override suspend fun install(write: suspend (OutputStream) -> Unit) {
+        installCalls += 1
+        val sink = ByteArrayOutputStream()
+        // Mirrors the real installer: a throwing write aborts the session and
+        // produces no result.
+        write(sink)
+        writtenBytes = sink.toByteArray()
+        committed = true
+        channel.send(result)
+    }
+}
+
+fun updateManifest(
+    versionCode: Int = 2,
+    versionName: String = "0.2.0",
+    minSdk: Int = 24,
+    apkUrl: String = "/updates/android/home-flix-$versionName.apk",
+    sha256: String = "unused",
+    size: Long = 0L,
+    releaseNotes: String? = null
+): UpdateManifest = UpdateManifest(
+    schemaVersion = 1,
+    versionCode = versionCode,
+    versionName = versionName,
+    minSdk = minSdk,
+    apkUrl = apkUrl,
+    sha256 = sha256,
+    size = size,
+    releaseNotes = releaseNotes
+)
+
+class FakeUpdateRepository : UpdateRepository {
+    var manifest: UpdateManifest = updateManifest()
+    var manifestError: Exception? = null
+    var downloadError: Exception? = null
+    var downloadedBytes: ByteArray = ByteArray(0)
+    var manifestCalls: Int = 0
+    var manifestOrigins = mutableListOf<String>()
+    var downloadUrls = mutableListOf<String>()
+
+    override suspend fun fetchManifest(origin: String): UpdateManifest {
+        manifestCalls += 1
+        manifestOrigins.add(origin)
+        manifestError?.let { throw it }
+        return manifest
+    }
+
+    override suspend fun download(
+        apkUrl: String,
+        size: Long,
+        onProgress: (downloaded: Long, total: Long) -> Unit,
+        sink: OutputStream
+    ): String {
+        downloadUrls.add(apkUrl)
+        downloadError?.let { throw it }
+        sink.write(downloadedBytes)
+        onProgress(downloadedBytes.size.toLong(), size)
+        return sha256Hex(downloadedBytes)
+    }
 }
