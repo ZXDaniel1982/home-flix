@@ -140,8 +140,11 @@ Follows `scripts/deploy-web.sh` conventions:
   `./gradlew -q printVersionInfo` task; copy the APK to `home-flix-<versionName>-<versionCode>.apk`
   (both parts, so every release URL is unique under immutable caching); compute `sha256` and `size`;
   write `manifest.json`; `rsync` the APK and manifest to `REMOTE_DIR`.
-- Safety: require an absolute, non-suspicious `REMOTE_DIR` (as `deploy-web.sh` does). Do **not**
-  use `rsync --delete`, so previously published APKs remain available.
+- Safety: require an absolute, non-suspicious `REMOTE_DIR` (as `deploy-web.sh` does). The sync
+  **mirrors** the staging directory (`rsync --delete`), so the Pi keeps only the current release —
+  the manifest plus its one APK; older APKs are removed. The manifest is the only pointer a device
+  needs, so nothing references a removed APK. A consequence is that rolling back requires rebuilding
+  the previous version and publishing it with a higher `versionCode`.
 - **Coexistence with web deploys:** the release directory lives inside the web root that
   `scripts/deploy-web.sh` syncs, so that script must exclude `/updates/` from its `--delete`;
   otherwise a routine frontend deploy would remove the manifest and APKs.

@@ -6,6 +6,12 @@ set -euo pipefail
 # updates/android/manifest.json, then rsyncs both into the directory Caddy
 # serves. No Caddy reload is needed (bind mount).
 #
+# The remote directory is mirrored (rsync --delete), so the Pi keeps only the
+# current release: the manifest plus its one APK. The manifest is the only
+# pointer a device needs, so older APKs are removed. That also means a rollback
+# requires rebuilding the previous version (and publishing it with a higher
+# versionCode).
+#
 # Usage:
 #   scripts/publish-android-release.sh
 #   NOTES=release-notes.md scripts/publish-android-release.sh
@@ -146,7 +152,7 @@ echo "== Release $version_name ($version_code), minSdk $min_sdk =="
 echo "   APK:      $apk_name ($size bytes)"
 echo "   SHA-256:  $sha"
 
-RSYNC_ARGS=(-avz)
+RSYNC_ARGS=(-avz --delete)
 if [[ "$DRY_RUN" == "1" ]]; then
 	RSYNC_ARGS+=(--dry-run)
 	echo "== Dry run: not writing to $DEST =="
@@ -159,6 +165,6 @@ if [[ "$DRY_RUN" == "1" ]]; then
 	echo "Dry run complete. Re-run without DRY_RUN=1 to publish."
 else
 	echo
-	echo "Published. Check for updates in the app, or fetch:"
+	echo "Published (only the current release is kept). Check for updates in the app, or fetch:"
 	echo "  http://$SERVER/updates/android/manifest.json"
 fi

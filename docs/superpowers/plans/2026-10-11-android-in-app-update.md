@@ -17,6 +17,11 @@
 > release artifacts; (2) the APK filename carries the `versionCode` as well as the
 > name (`home-flix-<versionName>-<versionCode>.apk`) so an immutable cache can never
 > serve two different builds from one URL. The binding authority remains the spec.
+>
+> **Revised 2026-10-13:** the release directory is mirrored (`rsync --delete`) so the Pi
+> hosts only the current release — the manifest plus its one APK — instead of
+> accumulating every APK ever published (Task 10's "no `--delete`" rule is superseded).
+> `scripts/test-publish-android-release.sh` now asserts the previous APK is pruned.
 
 ## Global Constraints
 

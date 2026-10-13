@@ -64,21 +64,26 @@ chmod +x "$android_dir/gradlew"
 
 shim="$work/bin"
 mkdir -p "$shim"
-cat >"$shim/rsync" <<'EOF'
+rsync_real="$(command -v rsync || true)"
+rsync_real="$(cd "$(dirname "$rsync_real")" && pwd)/$(basename "$rsync_real")"
+cat >"$shim/rsync" <<EOF
 #!/usr/bin/env bash
-# Fake rsync: copy the staged files into the path after the colon.
-args=("$@")
-dest="${args[-1]}"
-src="${args[-2]}"
-local="${dest#*:}"
-mkdir -p "$local"
-cp -r "$src"* "$local/"
+# Rewrite the remote destination to a local path, then run the real rsync so
+# --delete/--exclude semantics are genuinely exercised.
+args=("\$@")
+dest="\${args[-1]}"
+local_dest="\${dest#*:}"
+exec "$rsync_real" "\${args[@]:0:\${#args[@]}-1}" "\$local_dest"
 EOF
 chmod +x "$shim/rsync"
 
 stage="$work/stage"
 remote="$work/remote"
+# Pre-seed the destination with a previously published release, so the mirror
+# step has something to prune.
 mkdir -p "$remote"
+printf 'old-apk\n' >"$remote/home-flix-0.1.0-1.apk"
+printf '{"schemaVersion":1,"versionCode":1}\n' >"$remote/manifest.json"
 
 rc=0
 PATH="$shim:$PATH" SKIP_BUILD=1 ANDROID_DIR="$android_dir" STAGE_DIR="$stage" \
@@ -104,6 +109,22 @@ if [[ -f "$remote/home-flix-0.2.0-2.apk" && -f "$remote/manifest.json" ]]; then
 	echo "ok   - APK and manifest were synced"
 else
 	echo "FAIL - APK and manifest were not synced to $remote"
+	fails=$((fails + 1))
+fi
+
+# The remote is mirrored, so only the current release survives.
+if [[ ! -e "$remote/home-flix-0.1.0-1.apk" ]]; then
+	echo "ok   - previous APK was pruned"
+else
+	echo "FAIL - previous APK still present ($remote/home-flix-0.1.0-1.apk)"
+	fails=$((fails + 1))
+fi
+
+apk_count="$(find "$remote" -maxdepth 1 -name '*.apk' | wc -l | tr -d ' ')"
+if [[ "$apk_count" == "1" ]]; then
+	echo "ok   - exactly one APK is hosted"
+else
+	echo "FAIL - expected exactly one APK, found $apk_count"
 	fails=$((fails + 1))
 fi
 

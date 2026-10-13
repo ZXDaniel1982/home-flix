@@ -309,9 +309,11 @@ The Android app can check for and install its own updates over the LAN:
   Android refuses to install an update whose signature differs.
 - **Publishing:** `scripts/publish-android-release.sh` builds a signed release,
   writes the manifest, and rsyncs both to
-  `/mnt/ssd/web-frontend/updates/android/`. Because that directory sits inside the
-  web root, `scripts/deploy-web.sh` excludes `/updates/` from its `--delete` — a
-  routine frontend deploy must never remove the update artifacts.
+  `/mnt/ssd/web-frontend/updates/android/`. The sync mirrors the staging directory
+  (`rsync --delete`), so only the current release is kept — the manifest plus its one
+  APK. Because that directory sits inside the web root, `scripts/deploy-web.sh`
+  excludes `/updates/` from its `--delete` — a routine frontend deploy must never
+  remove the update artifacts.
 
 See `docs/superpowers/specs/2026-10-11-android-in-app-update-design.md` for the
 full design.
