@@ -310,12 +310,17 @@ Container images are pinned to explicit versions in `docker/docker-compose.yml`
 (`jellyfin/jellyfin:10.11.11`, `caddy:2.11.4-alpine`). Routine `docker compose pull`
 therefore stays on the pinned versions; upgrading is a deliberate tag bump.
 
-**Code or config changes (no image change):**
+**Code or config changes (no image change):** the Orange Pi has **no `git`**
+installed, so copy the changed files from the dev machine and then recreate the
+affected containers:
 
 ```bash
-git pull
-docker compose -f docker/docker-compose.yml up -d
+rsync -av docker/ dzhang@orangepi3b.local:~/home-flix/docker/
+ssh dzhang@orangepi3b.local 'docker compose -f ~/home-flix/docker/docker-compose.yml up -d'
 ```
+
+(A `Caddyfile`-only change needs just `docker restart caddy` — the config is a
+read-only bind mount, and the container re-reads it on start.)
 
 **Updating a container image:** review the upstream release notes, then:
 
