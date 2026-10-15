@@ -17,6 +17,19 @@
 > release artifacts; (2) the APK filename carries the `versionCode` as well as the
 > name (`home-flix-<versionName>-<versionCode>.apk`) so an immutable cache can never
 > serve two different builds from one URL. The binding authority remains the spec.
+>
+> **Revised 2026-10-13:** the release directory is mirrored (`rsync --delete`) so the Pi
+> hosts only the current release — the manifest plus its one APK — instead of
+> accumulating every APK ever published (Task 10's "no `--delete`" rule is superseded).
+> `scripts/test-publish-android-release.sh` now asserts the previous APK is pruned.
+>
+> **Revised 2026-10-15 (post-review of PR #5):** the automated review found two defects in
+> the mirror change. (1) `REMOTE_DIR` was only checked against a small denylist, so a
+> broader-but-plausible value (the web root) passed the guard and `--delete` would have
+> removed the whole static site — now the destination must end with `/updates/android`.
+> (2) The app downloaded the apkUrl from the manifest shown at prompt time, so publishing a
+> newer release before the user confirmed left that URL 404ing — `UpdateViewModel.update()`
+> now re-fetches the manifest on confirm and falls back to the supplied one if that fails.
 
 ## Global Constraints
 

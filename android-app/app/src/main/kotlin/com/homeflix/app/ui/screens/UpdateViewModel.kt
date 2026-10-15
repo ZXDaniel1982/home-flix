@@ -127,15 +127,30 @@ class UpdateViewModel(
             _installState.value = InstallState.Downloading(0, manifest.size)
             try {
                 val serverUrl = settingsRepository.serverUrl.first().orEmpty()
-                val apkUrl = joinUrl(updateOrigin(serverUrl), manifest.apkUrl)
+                val origin = updateOrigin(serverUrl)
+                // Re-fetch the manifest before downloading. The prompt may be stale:
+                // a release published since it was shown replaces the one this
+                // manifest points at (the server keeps only the current release), so
+                // downloading the old apkUrl would 404. Prefer the fresh manifest
+                // when it is still an update, and fall back to the supplied one if
+                // the refresh fails.
+                val fresh = try {
+                    updateRepository.fetchManifest(origin)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    manifest
+                }
+                val chosen = if (fresh.versionCode > currentVersionCode) fresh else manifest
+                val apkUrl = joinUrl(origin, chosen.apkUrl)
                 updateInstaller.install { sink ->
                     val countingSink = CountingOutputStream(sink)
-                    val digest = updateRepository.download(apkUrl, manifest.size, { done, total ->
+                    val digest = updateRepository.download(apkUrl, chosen.size, { done, total ->
                         _installState.value = InstallState.Downloading(done, total)
                     }, countingSink)
                     _installState.value = InstallState.Verifying
-                    if (!digest.equals(manifest.sha256, ignoreCase = true) ||
-                        (manifest.size > 0 && countingSink.count != manifest.size)
+                    if (!digest.equals(chosen.sha256, ignoreCase = true) ||
+                        (chosen.size > 0 && countingSink.count != chosen.size)
                     ) {
                         throw UpdateVerificationException()
                     }

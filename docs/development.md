@@ -237,8 +237,14 @@ The script builds the signed APK, writes
 into `/mnt/ssd/web-frontend/updates/android/` on the Orange Pi, where Caddy
 serves them. The APK file name includes both the version name and version code
 (e.g. `home-flix-0.2.0-2.apk`) so each release has a unique, immutably cacheable
-URL. Note that `scripts/deploy-web.sh` excludes `/updates/` from its `--delete`,
-so deploying the web frontend does not remove the update artifacts.
+URL. The sync mirrors the directory (`rsync --delete`), so only the current
+release is kept — the manifest plus its one APK; publishing a new release removes
+the previous APK, and rolling back means rebuilding the old version and
+publishing it with a higher `versionCode`. Because that mirror is destructive,
+`REMOTE_DIR` must end with `/updates/android`; a broader path such as the web
+root is rejected. Note that `scripts/deploy-web.sh`
+excludes `/updates/` from its `--delete`, so deploying the web frontend does not
+remove the update artifacts.
 See `docs/architecture.md` §14.1 for the full flow.
 
 **One-time transition:** the app installed before this feature is debug-signed,

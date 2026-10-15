@@ -6,6 +6,12 @@ set -euo pipefail
 # updates/android/manifest.json, then rsyncs both into the directory Caddy
 # serves. No Caddy reload is needed (bind mount).
 #
+# The remote directory is mirrored (rsync --delete), so the Pi keeps only the
+# current release: the manifest plus its one APK. The manifest is the only
+# pointer a device needs, so older APKs are removed. That also means a rollback
+# requires rebuilding the previous version (and publishing it with a higher
+# versionCode).
+#
 # Usage:
 #   scripts/publish-android-release.sh
 #   NOTES=release-notes.md scripts/publish-android-release.sh
@@ -14,8 +20,8 @@ set -euo pipefail
 # Env vars:
 #   SERVER       Orange Pi hostname (default orangepi3b.local)
 #   SSH_USER     SSH user on the board (default dzhang)
-#   REMOTE_DIR   Directory Caddy serves releases from
-#                (default /mnt/ssd/web-frontend/updates/android)
+#   REMOTE_DIR   Directory Caddy serves releases from; must end with
+#                /updates/android (default /mnt/ssd/web-frontend/updates/android)
 #   ANDROID_DIR  Gradle project dir (default <repo>/android-app)
 #   NOTES        Optional release-notes file
 #   SKIP_BUILD   set to 1 to reuse the existing release APK
@@ -35,8 +41,8 @@ Publish a signed Android release to the Orange Pi.
 Env vars:
   SERVER       Orange Pi hostname (default orangepi3b.local)
   SSH_USER     SSH user on the board (default dzhang)
-  REMOTE_DIR   Directory Caddy serves releases from
-               (default /mnt/ssd/web-frontend/updates/android)
+  REMOTE_DIR   Directory Caddy serves releases from; must end with
+               /updates/android (default /mnt/ssd/web-frontend/updates/android)
   ANDROID_DIR  Gradle project dir (default <repo>/android-app)
   NOTES        Optional release-notes file
   SKIP_BUILD   set to 1 to reuse the existing release APK
@@ -75,9 +81,19 @@ if [[ "$REMOTE_DIR" != /* ]]; then
 	echo "ERROR: REMOTE_DIR must be an absolute path (got '$REMOTE_DIR')." >&2
 	exit 1
 fi
+
+# The sync mirrors the destination (rsync --delete), so the destination must be
+# the dedicated Android release directory and nothing broader — a plausible but
+# wider path such as the web root would otherwise have every site file deleted.
+# Any prefix is allowed (so a different Caddy root still works, e.g.
+# /srv/updates/android), but the tail must be exactly updates/android.
+REMOTE_DIR="${REMOTE_DIR%/}"
 case "$REMOTE_DIR" in
-"" | "/" | "/mnt" | "/mnt/ssd" | "/home" | "/root" | "/etc" | "/var" | "/usr")
-	echo "ERROR: refusing to write into unsafe REMOTE_DIR '$REMOTE_DIR'." >&2
+*/updates/android) ;;
+*)
+	echo "ERROR: REMOTE_DIR must end with '/updates/android' (got '$REMOTE_DIR')." >&2
+	echo "       Publishing mirrors the directory with --delete, so a broader path" >&2
+	echo "       (for example the web root) would delete unrelated files." >&2
 	exit 1
 	;;
 esac
@@ -146,7 +162,7 @@ echo "== Release $version_name ($version_code), minSdk $min_sdk =="
 echo "   APK:      $apk_name ($size bytes)"
 echo "   SHA-256:  $sha"
 
-RSYNC_ARGS=(-avz)
+RSYNC_ARGS=(-avz --delete)
 if [[ "$DRY_RUN" == "1" ]]; then
 	RSYNC_ARGS+=(--dry-run)
 	echo "== Dry run: not writing to $DEST =="
@@ -159,6 +175,6 @@ if [[ "$DRY_RUN" == "1" ]]; then
 	echo "Dry run complete. Re-run without DRY_RUN=1 to publish."
 else
 	echo
-	echo "Published. Check for updates in the app, or fetch:"
+	echo "Published (only the current release is kept). Check for updates in the app, or fetch:"
 	echo "  http://$SERVER/updates/android/manifest.json"
 fi
