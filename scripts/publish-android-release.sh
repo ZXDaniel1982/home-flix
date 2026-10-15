@@ -20,8 +20,8 @@ set -euo pipefail
 # Env vars:
 #   SERVER       Orange Pi hostname (default orangepi3b.local)
 #   SSH_USER     SSH user on the board (default dzhang)
-#   REMOTE_DIR   Directory Caddy serves releases from
-#                (default /mnt/ssd/web-frontend/updates/android)
+#   REMOTE_DIR   Directory Caddy serves releases from; must end with
+#                /updates/android (default /mnt/ssd/web-frontend/updates/android)
 #   ANDROID_DIR  Gradle project dir (default <repo>/android-app)
 #   NOTES        Optional release-notes file
 #   SKIP_BUILD   set to 1 to reuse the existing release APK
@@ -41,8 +41,8 @@ Publish a signed Android release to the Orange Pi.
 Env vars:
   SERVER       Orange Pi hostname (default orangepi3b.local)
   SSH_USER     SSH user on the board (default dzhang)
-  REMOTE_DIR   Directory Caddy serves releases from
-               (default /mnt/ssd/web-frontend/updates/android)
+  REMOTE_DIR   Directory Caddy serves releases from; must end with
+               /updates/android (default /mnt/ssd/web-frontend/updates/android)
   ANDROID_DIR  Gradle project dir (default <repo>/android-app)
   NOTES        Optional release-notes file
   SKIP_BUILD   set to 1 to reuse the existing release APK
@@ -81,9 +81,19 @@ if [[ "$REMOTE_DIR" != /* ]]; then
 	echo "ERROR: REMOTE_DIR must be an absolute path (got '$REMOTE_DIR')." >&2
 	exit 1
 fi
+
+# The sync mirrors the destination (rsync --delete), so the destination must be
+# the dedicated Android release directory and nothing broader — a plausible but
+# wider path such as the web root would otherwise have every site file deleted.
+# Any prefix is allowed (so a different Caddy root still works, e.g.
+# /srv/updates/android), but the tail must be exactly updates/android.
+REMOTE_DIR="${REMOTE_DIR%/}"
 case "$REMOTE_DIR" in
-"" | "/" | "/mnt" | "/mnt/ssd" | "/home" | "/root" | "/etc" | "/var" | "/usr")
-	echo "ERROR: refusing to write into unsafe REMOTE_DIR '$REMOTE_DIR'." >&2
+*/updates/android) ;;
+*)
+	echo "ERROR: REMOTE_DIR must end with '/updates/android' (got '$REMOTE_DIR')." >&2
+	echo "       Publishing mirrors the directory with --delete, so a broader path" >&2
+	echo "       (for example the web root) would delete unrelated files." >&2
 	exit 1
 	;;
 esac

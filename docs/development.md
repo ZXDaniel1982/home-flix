@@ -240,7 +240,9 @@ serves them. The APK file name includes both the version name and version code
 URL. The sync mirrors the directory (`rsync --delete`), so only the current
 release is kept — the manifest plus its one APK; publishing a new release removes
 the previous APK, and rolling back means rebuilding the old version and
-publishing it with a higher `versionCode`. Note that `scripts/deploy-web.sh`
+publishing it with a higher `versionCode`. Because that mirror is destructive,
+`REMOTE_DIR` must end with `/updates/android`; a broader path such as the web
+root is rejected. Note that `scripts/deploy-web.sh`
 excludes `/updates/` from its `--delete`, so deploying the web frontend does not
 remove the update artifacts.
 See `docs/architecture.md` §14.1 for the full flow.

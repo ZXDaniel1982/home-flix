@@ -43,7 +43,12 @@ expect_rc "relative REMOTE_DIR exits 1" 1 "$rc"
 
 rc=0
 REMOTE_DIR=/mnt/ssd "$publish" >/dev/null 2>&1 || rc=$?
-expect_rc "unsafe REMOTE_DIR exits 1" 1 "$rc"
+expect_rc "REMOTE_DIR outside the release dir exits 1" 1 "$rc"
+
+# A plausible-but-broader destination: the mirror would delete the web frontend.
+rc=0
+REMOTE_DIR=/mnt/ssd/web-frontend "$publish" >/dev/null 2>&1 || rc=$?
+expect_rc "web root as REMOTE_DIR exits 1" 1 "$rc"
 
 # --- Manifest generation with a fixture APK, stub gradlew, fake rsync ------
 android_dir="$work/android-app"
@@ -78,7 +83,8 @@ EOF
 chmod +x "$shim/rsync"
 
 stage="$work/stage"
-remote="$work/remote"
+# REMOTE_DIR must end with /updates/android (the mirror is destructive).
+remote="$work/srv/updates/android"
 # Pre-seed the destination with a previously published release, so the mirror
 # step has something to prune.
 mkdir -p "$remote"

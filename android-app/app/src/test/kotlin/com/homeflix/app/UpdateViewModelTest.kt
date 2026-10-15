@@ -262,4 +262,60 @@ class UpdateViewModelTest {
 
         assertEquals(7, settings.skippedVersionCode.first())
     }
+
+    @Test
+    fun update_refreshesStaleManifest_usesTheCurrentRelease() = runTest(mainDispatcherRule.testDispatcher) {
+        val bytes = "hello".toByteArray()
+        val repo = FakeUpdateRepository().apply {
+            // A newer release was published after the prompt was shown, so the
+            // stale manifest's APK no longer exists on the server.
+            manifest = updateManifest(
+                versionCode = 3,
+                versionName = "0.3.0",
+                apkUrl = "/updates/android/home-flix-0.3.0-3.apk",
+                sha256 = sha256Hex(bytes),
+                size = bytes.size.toLong()
+            )
+            downloadedBytes = bytes
+        }
+        val installer = FakeUpdateInstaller()
+        val vm = viewModel(repo = repo, installer = installer)
+        val stale = updateManifest(
+            versionCode = 2,
+            versionName = "0.2.0",
+            apkUrl = "/updates/android/home-flix-0.2.0-2.apk",
+            sha256 = "stale",
+            size = 0L
+        )
+
+        vm.update(stale)
+        advanceUntilIdle()
+
+        assertEquals("http://host/updates/android/home-flix-0.3.0-3.apk", repo.downloadUrls.single())
+        assertEquals(UpdateViewModel.InstallState.Installed, vm.installState.value)
+    }
+
+    @Test
+    fun update_refreshFails_fallsBackToTheProvidedManifest() = runTest(mainDispatcherRule.testDispatcher) {
+        val bytes = "hello".toByteArray()
+        val repo = FakeUpdateRepository().apply {
+            manifestError = RuntimeException("offline")
+            downloadedBytes = bytes
+        }
+        val installer = FakeUpdateInstaller()
+        val vm = viewModel(repo = repo, installer = installer)
+        val provided = updateManifest(
+            versionCode = 2,
+            versionName = "0.2.0",
+            apkUrl = "/updates/android/home-flix-0.2.0-2.apk",
+            sha256 = sha256Hex(bytes),
+            size = bytes.size.toLong()
+        )
+
+        vm.update(provided)
+        advanceUntilIdle()
+
+        assertEquals("http://host/updates/android/home-flix-0.2.0-2.apk", repo.downloadUrls.single())
+        assertEquals(UpdateViewModel.InstallState.Installed, vm.installState.value)
+    }
 }

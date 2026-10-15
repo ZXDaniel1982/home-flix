@@ -85,8 +85,11 @@ non-system app — the user always confirms through the system installer.
    shows a prompt with the version and release notes.
 4. Prompt actions: **Update** starts the download/install; **Later** dismisses and remembers the
    version.
-5. Download: stream to the installer session, report progress, compute SHA-256 in the same pass.
-   On completion, compare size and digest; on mismatch, abandon the session and report failure.
+5. Download: re-fetch the manifest first (a release published since the prompt replaced the one it
+   points at, and the server keeps only the current release), then stream that APK to the installer
+   session, report progress, and compute SHA-256 in the same pass. If the re-fetch fails, fall back
+   to the manifest that was shown. On completion, compare size and digest; on mismatch, abandon the
+   session and report failure.
 6. Install: only after verification, commit the session. The user confirms in the system dialog.
    `FAILURE_ABORTED` is treated as cancellation; other failures are reported.
 7. If the app may not install packages, show the permission state with a deep link to
@@ -134,17 +137,20 @@ versions it does not understand.
 Follows `scripts/deploy-web.sh` conventions:
 
 - Env: `SERVER` (default `orangepi3b.local`), `SSH_USER` (default `dzhang`), `REMOTE_DIR`
-  (default `/mnt/ssd/web-frontend/updates/android`), `NOTES` (optional release-notes file),
-  `DRY_RUN`, plus keystore env overrides for headless signing.
+  (default `/mnt/ssd/web-frontend/updates/android`; must end with `/updates/android`),
+  `NOTES` (optional release-notes file), `DRY_RUN`, plus keystore env overrides for headless
+  signing.
 - Steps: run `./gradlew clean assembleRelease`; read `versionCode`/`versionName` from a new
   `./gradlew -q printVersionInfo` task; copy the APK to `home-flix-<versionName>-<versionCode>.apk`
   (both parts, so every release URL is unique under immutable caching); compute `sha256` and `size`;
   write `manifest.json`; `rsync` the APK and manifest to `REMOTE_DIR`.
-- Safety: require an absolute, non-suspicious `REMOTE_DIR` (as `deploy-web.sh` does). The sync
+- Safety: require an absolute `REMOTE_DIR` that ends with `/updates/android`. The sync
   **mirrors** the staging directory (`rsync --delete`), so the Pi keeps only the current release —
   the manifest plus its one APK; older APKs are removed. The manifest is the only pointer a device
   needs, so nothing references a removed APK. A consequence is that rolling back requires rebuilding
-  the previous version and publishing it with a higher `versionCode`.
+  the previous version and publishing it with a higher `versionCode`. Because the mirror is
+  destructive, the destination is constrained to the release directory: a plausible but broader
+  path (such as the web root) is rejected, since it would delete unrelated files.
 - **Coexistence with web deploys:** the release directory lives inside the web root that
   `scripts/deploy-web.sh` syncs, so that script must exclude `/updates/` from its `--delete`;
   otherwise a routine frontend deploy would remove the manifest and APKs.
