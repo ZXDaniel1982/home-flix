@@ -1,7 +1,7 @@
 # Development Environment Guide
 
-**Version:** 1.0  
-**Last Updated:** [Date]
+**Version:** 1.1
+**Last Updated:** 2026-10-19
 
 ---
 
@@ -197,6 +197,13 @@ The Arch laptop is headless (no emulator/KVM). To run the app:
    ```bash
    adb install app-debug.apk
    ```
+
+Fullscreen and orientation are window-level behaviors, so the headless unit tests cannot cover them. Check them on the emulator:
+
+- Enter and exit fullscreen: the app bar and system bars hide, the video rotates to landscape, and playback continues.
+- **Back** exits fullscreen first; a second press leaves the player.
+- Next/previous episode, episode-sheet selection, and auto-advance keep fullscreen on.
+- Rotating the device manually does not restart the video (the Activity keeps the player alive via `configChanges`).
 
 ### 6.5 Release signing and publishing
 

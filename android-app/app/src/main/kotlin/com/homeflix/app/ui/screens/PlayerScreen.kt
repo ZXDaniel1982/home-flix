@@ -1,6 +1,7 @@
 package com.homeflix.app.ui.screens
 
 import android.os.SystemClock
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
@@ -65,10 +68,14 @@ fun PlayerScreen(
     onBack: () -> Unit,
     onPlayEpisode: (String) -> Unit,
     onLogout: () -> Unit,
+    isFullscreen: Boolean,
+    onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    BackHandler(enabled = isFullscreen) { onToggleFullscreen() }
 
     LaunchedEffect(Unit) {
         viewModel.unauthorizedEvents.collect { onLogout() }
@@ -78,15 +85,17 @@ fun PlayerScreen(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
-            TopAppBar(
-                title = { Text("Now Playing") },
-                windowInsets = WindowInsets(0.dp),
-                navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Back")
+            if (!isFullscreen) {
+                TopAppBar(
+                    title = { Text("Now Playing") },
+                    windowInsets = WindowInsets(0.dp),
+                    navigationIcon = {
+                        TextButton(onClick = onBack) {
+                            Text("Back")
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         when (val state = uiState) {
@@ -118,6 +127,8 @@ fun PlayerScreen(
                     episodesState = viewModel.episodesState.collectAsState().value,
                     currentEpisodeId = viewModel.playingItemId,
                     seasonNumber = viewModel.playingSeasonNumber,
+                    isFullscreen = isFullscreen,
+                    onToggleFullscreen = onToggleFullscreen,
                     onLoadEpisodes = viewModel::loadEpisodes,
                     onPlayEpisode = onPlayEpisode,
                     onReportStarted = viewModel::reportStarted,
@@ -141,6 +152,8 @@ private fun VideoPlayer(
     episodesState: PlayerViewModel.EpisodesState,
     currentEpisodeId: String,
     seasonNumber: Int?,
+    isFullscreen: Boolean,
+    onToggleFullscreen: () -> Unit,
     onLoadEpisodes: () -> Unit,
     onPlayEpisode: (String) -> Unit,
     onReportStarted: (Long) -> Unit,
@@ -369,6 +382,18 @@ private fun VideoPlayer(
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
+
+                    IconButton(onClick = onToggleFullscreen) {
+                        Icon(
+                            imageVector = if (isFullscreen) {
+                                Icons.Filled.FullscreenExit
+                            } else {
+                                Icons.Filled.Fullscreen
+                            },
+                            contentDescription = if (isFullscreen) "Exit fullscreen" else "Fullscreen",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
 

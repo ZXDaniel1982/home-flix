@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ import com.homeflix.app.ui.screens.LoginScreen
 import com.homeflix.app.ui.screens.LoginViewModel
 import com.homeflix.app.ui.screens.MovieDetailScreen
 import com.homeflix.app.ui.screens.MoviesScreen
+import com.homeflix.app.ui.screens.PlayerFullscreenEffect
 import com.homeflix.app.ui.screens.PlayerScreen
 import com.homeflix.app.ui.screens.SearchScreen
 import com.homeflix.app.ui.screens.SeriesDetailScreen
@@ -56,8 +58,14 @@ fun AppNavHost(
 ) {
     val navController = rememberNavController()
 
+    // Owned here rather than in PlayerScreen so fullscreen survives navigating
+    // between episodes (which replaces the player's back-stack entry).
+    var isFullscreen by rememberSaveable { mutableStateOf(false) }
+    PlayerFullscreenEffect(enabled = isFullscreen)
+
     LaunchedEffect(Unit) {
         sessionViewModel.logoutEvents.collect {
+            isFullscreen = false
             navController.navigate(Routes.LOGIN) {
                 popUpTo(Routes.HOME) { inclusive = true }
             }
@@ -163,7 +171,12 @@ fun AppNavHost(
                     arguments = listOf(navArgument(Routes.ARG_MOVIE_ID) { type = NavType.StringType })
                 ) {
                     PlayerScreen(
-                        onBack = { navController.popBackStack() },
+                        isFullscreen = isFullscreen,
+                        onToggleFullscreen = { isFullscreen = !isFullscreen },
+                        onBack = {
+                            isFullscreen = false
+                            navController.popBackStack()
+                        },
                         onPlayEpisode = { episodeId ->
                             navController.navigate(Routes.player(episodeId)) {
                                 popUpTo(Routes.PLAYER) { inclusive = true }

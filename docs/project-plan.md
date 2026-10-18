@@ -1,7 +1,7 @@
 # Project Plan — Home Media Server
 
-**Version:** 1.1
-**Last Updated:** 2026-10-15
+**Version:** 1.2
+**Last Updated:** 2026-10-19
 
 This document breaks the project into manageable **modules**, **epics**, and **stories** to guide incremental development. Each story is marked with a priority (MVP, Recommended, Optional) and a rough size (S, M, L, XL). Tick the boxes as you complete each story to track your progress.
 
@@ -122,6 +122,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 - [x] 3.4.2 — Playback controls: Custom controls (play/pause, seek). *(MVP, M)*
 - [x] 3.4.3 — Handle playback errors: Error UI on failure. *(MVP, S)*
 - [x] 3.4.4 — Resume playback: Send progress updates, resume from last position. *(Recommended, M)*
+- [x] 3.4.5 — Fullscreen playback: Hide the app bar and system bars, request landscape, exit via the button or Back, and stay fullscreen across episode changes. *(Recommended, M)*
 
 ### Epic 3.5 — TV Series & Search (Phase 2)
 
@@ -166,7 +167,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 4.3.1 — Unit tests for ViewModels: Test API calls, state management. *(Recommended, M)*
 - [x] 4.3.2 — UI tests with Compose test: Test navigation, login screen (run on Windows emulator via adb). *(Recommended, M)*
-- [ ] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume. *(MVP, M)*
+- [ ] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume, and fullscreen. *(MVP, M)*
 
 **Dependencies:** 4.1 after 1.3; 4.2 after 2.3; 4.3 after 3.3.
 

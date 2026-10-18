@@ -1,7 +1,7 @@
 # Home Media Server — System Architecture
 
-**Version:** 1.3
-**Last Updated:** 2026-10-11
+**Version:** 1.4
+**Last Updated:** 2026-10-19
 
 ---
 
@@ -219,10 +219,12 @@ The Android app mirrors the web functionality and uses the jellyfin‑sdk‑kotl
 | Login | Authenticate and receive token |
 | Movies Grid | Browse movies |
 | Movie Detail | Metadata and play button |
-| Player | Media3 ExoPlayer with direct stream URL |
+| Player | Media3 ExoPlayer with direct stream URL; custom controls and fullscreen |
 | Settings | App version, check for updates (in-app update), log out |
 
-Playback: ExoPlayer plays the direct stream URL. The app sends playback progress updates to Jellyfin for resume functionality (optional MVP).
+Playback: ExoPlayer plays the direct stream URL; the app reports playback progress to Jellyfin for resume functionality.
+
+Fullscreen: the player hides the app top bar and the system bars and requests landscape. `MainActivity` declares the matching `configChanges`, so orientation changes do not recreate the Activity — the ExoPlayer instance, playback position, and fullscreen state survive entering or leaving fullscreen, manual rotation, and navigation between episodes.
 
 ---
 
@@ -344,6 +346,7 @@ full design.
 | Single repository (monorepo) | Simplifies management for a solo project. |
 | Caddy as reverse proxy | Easy HTTPS, automatic mDNS support, lightweight. |
 | SQLite (inside Jellyfin) | Adequate for home scale; no external database needed. |
+| Handle orientation config changes in the Activity | Forcing landscape for fullscreen would otherwise recreate the Activity and rebuild ExoPlayer at the stale saved resume position; declaring the config changes keeps playback continuous and preserves fullscreen across episodes. |
 
 ---
 

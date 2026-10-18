@@ -63,7 +63,8 @@ The bottom bar has four tabs:
 
 ### Playback
 
-- Custom controls: previous/next episode, play/pause, and a seek bar with elapsed/total time.
+- Custom controls: previous/next episode, play/pause, a seek bar with elapsed/total time, and a fullscreen button.
+- Fullscreen hides the top bar and the system bars and rotates the phone to landscape. Tap the fullscreen icon again or press **Back** to leave fullscreen; the next **Back** returns to the previous screen. Fullscreen stays on when you change episodes.
 - For TV episodes, previous/next stay **within the current season** and are greyed out at the first/last episode of a season.
 - When an episode ends, a countdown auto-plays the next in-season episode.
 - Playback **resumes** from the last position; progress is reported to Jellyfin.
