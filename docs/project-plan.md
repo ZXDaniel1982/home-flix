@@ -167,7 +167,7 @@ This document breaks the project into manageable **modules**, **epics**, and **s
 
 - [x] 4.3.1 — Unit tests for ViewModels: Test API calls, state management. *(Recommended, M)*
 - [x] 4.3.2 — UI tests with Compose test: Test navigation, login screen (run on Windows emulator via adb). *(Recommended, M)*
-- [ ] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume, and fullscreen. *(MVP, M)*
+- [x] 4.3.3 — Manual testing: Install APK in MuMu Player (Windows) or on a device, test playback, seek, resume, and fullscreen. *(MVP, M)*
 
 **Dependencies:** 4.1 after 1.3; 4.2 after 2.3; 4.3 after 3.3.
 
