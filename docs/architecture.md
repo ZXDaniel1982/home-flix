@@ -288,8 +288,9 @@ Clients use a subset of Jellyfin’s REST API. The web app authenticates with th
    - Edit `docker-compose.yml` / `docker/Caddyfile` in the repo.
    - Copy the changed files to the board — the Orange Pi has **no `git`** installed:
      `rsync -av docker/ dzhang@orangepi3b.local:~/home-flix/docker/`
-   - Restart the affected containers (`docker restart caddy`, or
-     `docker compose -f docker/docker-compose.yml up -d`).
+   - Restart the affected containers on the board:
+     `ssh dzhang@orangepi3b.local 'docker restart caddy'`, or
+     `ssh dzhang@orangepi3b.local 'docker compose -f ~/home-flix/docker/docker-compose.yml up -d'`.
 
 ### 14.1 Android in-app updates
 
