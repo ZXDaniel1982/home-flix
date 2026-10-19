@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -66,8 +67,12 @@ fun AppNavHost(
     LaunchedEffect(Unit) {
         sessionViewModel.logoutEvents.collect {
             isFullscreen = false
+            // Tab navigation saves each tab's back stack (and its ViewModels).
+            // Clear that saved state and pop the whole graph so the next account
+            // never inherits the previous account's lists.
+            clearUserScopedNavigationState(navController)
             navController.navigate(Routes.LOGIN) {
-                popUpTo(Routes.HOME) { inclusive = true }
+                popUpTo(navController.graph.id) { inclusive = true }
             }
         }
     }
@@ -279,5 +284,16 @@ fun AppNavHost(
             state = installState,
             onDismiss = { updateViewModel.dismissInstallResult() }
         )
+    }
+}
+
+/**
+ * The bottom navigation saves each tab's back stack (and its ViewModels) with
+ * `saveState = true`. Those entries outlive a logout unless explicitly cleared,
+ * which would show one account's content to the next account that signs in.
+ */
+private fun clearUserScopedNavigationState(navController: NavHostController) {
+    listOf(Routes.HOME, Routes.MOVIES, Routes.TV_SERIES, Routes.SEARCH).forEach { route ->
+        navController.clearBackStack(route)
     }
 }
