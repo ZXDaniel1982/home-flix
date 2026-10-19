@@ -257,15 +257,24 @@ release installs in-app.
 
 ## 7. Production Deployment (Orange Pi 3B)
 
-### 7.1 SSH and Clone
+### 7.1 Copy the Docker configuration
 
 The board has users `root` and `dzhang`; SSH as `dzhang`.
 
+The Orange Pi has **no `git`**, so copy the Docker configuration from the
+development machine instead of cloning the repository:
+
+```bash
+# On the development machine, from the repository root:
+ssh dzhang@orangepi3b.local 'mkdir -p ~/home-flix/docker'
+rsync -av docker/ dzhang@orangepi3b.local:~/home-flix/docker/
+```
+
+Then connect to the board for the remaining steps:
+
 ```bash
 ssh dzhang@orangepi3b.local
-cd ~
-git clone https://github.com/yourusername/home-media-server.git
-cd home-media-server/docker
+cd ~/home-flix/docker
 ```
 
 ### 7.2 Configure Environment
