@@ -264,15 +264,24 @@ release installs in-app.
 
 ## 7. Production Deployment (Orange Pi 3B)
 
-### 7.1 SSH and Clone
+### 7.1 Copy the Docker configuration
 
 The board has users `root` and `dzhang`; SSH as `dzhang`.
 
+The Orange Pi has **no `git`**, so copy the Docker configuration from the
+development machine instead of cloning the repository:
+
+```bash
+# On the development machine, from the repository root:
+ssh dzhang@orangepi3b.local 'mkdir -p ~/home-flix/docker'
+rsync -av docker/ dzhang@orangepi3b.local:~/home-flix/docker/
+```
+
+Then connect to the board for the remaining steps:
+
 ```bash
 ssh dzhang@orangepi3b.local
-cd ~
-git clone https://github.com/yourusername/home-media-server.git
-cd home-media-server/docker
+cd ~/home-flix/docker
 ```
 
 ### 7.2 Configure Environment
@@ -317,12 +326,17 @@ Container images are pinned to explicit versions in `docker/docker-compose.yml`
 (`jellyfin/jellyfin:10.11.11`, `caddy:2.11.4-alpine`). Routine `docker compose pull`
 therefore stays on the pinned versions; upgrading is a deliberate tag bump.
 
-**Code or config changes (no image change):**
+**Code or config changes (no image change):** the Orange Pi has **no `git`**
+installed, so copy the changed files from the dev machine and then recreate the
+affected containers:
 
 ```bash
-git pull
-docker compose -f docker/docker-compose.yml up -d
+rsync -av docker/ dzhang@orangepi3b.local:~/home-flix/docker/
+ssh dzhang@orangepi3b.local 'docker compose -f ~/home-flix/docker/docker-compose.yml up -d'
 ```
+
+(A `Caddyfile`-only change needs just `docker restart caddy` — the config is a
+read-only bind mount, and the container re-reads it on start.)
 
 **Updating a container image:** review the upstream release notes, then:
 
